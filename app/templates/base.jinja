@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Gerenciamento de Salas{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/main.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Skip to content link for accessibility -->
+    <a href="#main-content" class="skip-link">Pular para o conteúdo</a>
+    
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-message mt-3">Carregando...</div>
+    </div>
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-building me-2"></i>
+                <span class="d-none d-sm-inline">Sistema de Gerenciamento de Salas</span>
+                <span class="d-inline d-sm-none">IFAM</span>
+            </a>
+            <button class="navbar-toggler navbar-toggler-sidebar me-2" type="button">
+                <i class="fas fa-bars"></i>
+            </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/rooms">
+                            <i class="fas fa-door-open me-1"></i> Salas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reservations">
+                            <i class="fas fa-calendar-alt me-1"></i> Reservas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reservations/my">
+                            <i class="fas fa-bookmark me-1"></i> Minhas Reservas
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ user.name if user else "Usuário" }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-id-card me-1"></i> Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-1"></i> Sair</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/rooms' in request.url.path %}active{% endif %}" href="/rooms">
+                                <i class="fas fa-door-open me-2"></i> Salas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/reservations' in request.url.path and not '/my' in request.url.path %}active{% endif %}" href="/reservations">
+                                <i class="fas fa-calendar-alt me-2"></i> Reservas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/reservations/my' in request.url.path %}active{% endif %}" href="/reservations/my">
+                                <i class="fas fa-bookmark me-2"></i> Minhas Reservas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/rooms/available' in request.url.path %}active{% endif %}" href="/rooms/available">
+                                <i class="fas fa-search me-2"></i> Buscar Salas
+                            </a>
+                        </li>
+                        
+                        <!-- Admin/Gestor Links -->
+                        {% if user and user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR'] %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/reservations/pending' in request.url.path %}active{% endif %}" href="/reservations/pending">
+                                <i class="fas fa-clock me-2"></i> Aprovações Pendentes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/departments' in request.url.path %}active{% endif %}" href="/departments">
+                                <i class="fas fa-building me-2"></i> Departamentos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/dashboard/reports' in request.url.path %}active{% endif %}" href="/dashboard/reports">
+                                <i class="fas fa-chart-bar me-2"></i> Relatórios
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main id="main-content" class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
+                {% if messages %}
+                <div class="messages-container mb-4">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.type }} alert-dismissible fade show" role="alert">
+                        {{ message.text }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="/static/js/validation.min.js"></script>
+    <script src="/static/js/ui.min.js"></script>
+    <script src="/static/js/main.min.js"></script>
+    
+    <!-- Initialize form validation on all forms with data-validate attribute -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize form validation
+            const forms = document.querySelectorAll('form[data-validate="true"]');
+            forms.forEach(form => {
+                if (window.IFAM && window.IFAM.validation && form.id) {
+                    window.IFAM.validation.initFormValidation(form.id);
+                }
+            });
+            
+            // Add loading indicator for form submissions
+            const allForms = document.querySelectorAll('form:not([data-ajax="true"])');
+            allForms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn && window.IFAM && window.IFAM.ui && window.IFAM.ui.formButton) {
+                        window.IFAM.ui.formButton.setLoading(submitBtn.id || 'submit-btn');
+                    }
+                    
+                    if (window.IFAM && window.IFAM.ui && window.IFAM.ui.loadingOverlay) {
+                        window.IFAM.ui.loadingOverlay.show('Processando...');
+                    }
+                });
+            });
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

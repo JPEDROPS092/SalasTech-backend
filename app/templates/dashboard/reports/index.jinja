@@ -1,0 +1,579 @@
+{% extends "base.jinja" %}
+
+{% block title %}Relatórios - Sistema de Gerenciamento de Salas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 100%;
+    }
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .report-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        transition: transform 0.3s;
+    }
+    .report-card:hover .report-icon {
+        transform: scale(1.1);
+    }
+    .report-header {
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+        color: white;
+    }
+    .report-primary {
+        background: linear-gradient(45deg, #4e73df, #2e59d9);
+    }
+    .report-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    .report-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    .report-danger {
+        background: linear-gradient(45deg, #e74a3b, #be2617);
+    }
+    .report-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    .report-secondary {
+        background: linear-gradient(45deg, #858796, #60616f);
+    }
+    .report-footer {
+        background-color: #f8f9fc;
+        border-top: 1px solid #e3e6f0;
+        padding: 1rem;
+    }
+    .report-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border-radius: 30px;
+        padding: 5px 10px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .recent-reports-header {
+        background: linear-gradient(45deg, #4e73df, #2e59d9);
+        color: white;
+        border-radius: 10px 10px 0 0;
+        padding: 1rem 1.5rem;
+    }
+    .filter-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+        margin-right: 0.3rem;
+        margin-bottom: 0.3rem;
+        border-radius: 30px;
+        display: inline-block;
+    }
+    .scheduled-badge {
+        background-color: #e8f4fd;
+        color: #2c9faf;
+        border: 1px solid #36b9cc;
+    }
+    .favorite-badge {
+        background-color: #fff3cd;
+        color: #dda20a;
+        border: 1px solid #f6c23e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">
+            <i class="fas fa-chart-bar me-2"></i>
+            Central de Relatórios
+        </h1>
+        
+        <div>
+            <a href="/dashboard/reports/custom_report" class="btn btn-primary me-2">
+                <i class="fas fa-plus me-1"></i> Novo Relatório
+            </a>
+            <a href="/dashboard" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar para Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Relatórios Principais -->
+    <div class="row">
+        <!-- Relatório de Ocupação -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card report-card shadow">
+                <div class="report-header report-primary">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="card-title">Relatório de Ocupação</h5>
+                    <span class="report-badge bg-white text-primary">Mais Utilizado</span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Análise detalhada da taxa de ocupação das salas por período, incluindo gráficos de tendência e comparativos.</p>
+                    <div class="d-flex mt-3 mb-2">
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-chart-line me-1"></i> Gráficos</span>
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-table me-1"></i> Tabelas</span>
+                        <span class="badge bg-light text-dark"><i class="fas fa-file-export me-1"></i> Exportável</span>
+                    </div>
+                </div>
+                <div class="report-footer text-center">
+                    <a href="/dashboard/reports/occupancy_report" class="btn btn-primary w-100">
+                        <i class="fas fa-eye me-1"></i> Visualizar Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Relatório por Departamento -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card report-card shadow">
+                <div class="report-header report-success">
+                    <div class="report-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h5 class="card-title">Relatório por Departamento</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Análise do uso de salas por departamento, comparativos de utilização e estatísticas detalhadas.</p>
+                    <div class="d-flex mt-3 mb-2">
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-chart-pie me-1"></i> Gráficos</span>
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-table me-1"></i> Tabelas</span>
+                        <span class="badge bg-light text-dark"><i class="fas fa-file-export me-1"></i> Exportável</span>
+                    </div>
+                </div>
+                <div class="report-footer text-center">
+                    <a href="/dashboard/reports/department_report" class="btn btn-success w-100">
+                        <i class="fas fa-eye me-1"></i> Visualizar Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Relatório por Usuário -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card report-card shadow">
+                <div class="report-header report-info">
+                    <div class="report-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h5 class="card-title">Relatório por Usuário</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Análise de reservas por usuário, estatísticas de uso e comportamento de utilização ao longo do tempo.</p>
+                    <div class="d-flex mt-3 mb-2">
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-chart-bar me-1"></i> Gráficos</span>
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-table me-1"></i> Tabelas</span>
+                        <span class="badge bg-light text-dark"><i class="fas fa-file-export me-1"></i> Exportável</span>
+                    </div>
+                </div>
+                <div class="report-footer text-center">
+                    <a href="/dashboard/reports/user_report" class="btn btn-info w-100">
+                        <i class="fas fa-eye me-1"></i> Visualizar Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Relatório de Manutenção -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card report-card shadow">
+                <div class="report-header report-danger">
+                    <div class="report-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h5 class="card-title">Relatório de Manutenção</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Histórico e estatísticas de manutenção das salas, incluindo tempos médios e frequência de problemas.</p>
+                    <div class="d-flex mt-3 mb-2">
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-chart-line me-1"></i> Gráficos</span>
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-table me-1"></i> Tabelas</span>
+                        <span class="badge bg-light text-dark"><i class="fas fa-file-export me-1"></i> Exportável</span>
+                    </div>
+                </div>
+                <div class="report-footer text-center">
+                    <a href="/dashboard/reports/maintenance_report" class="btn btn-danger w-100">
+                        <i class="fas fa-eye me-1"></i> Visualizar Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estatísticas Gerais -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card report-card shadow">
+                <div class="report-header report-warning">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h5 class="card-title">Estatísticas Gerais</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Visão geral e estatísticas completas do sistema, incluindo todos os indicadores importantes em um único lugar.</p>
+                    <div class="d-flex mt-3 mb-2">
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-chart-pie me-1"></i> Gráficos</span>
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-table me-1"></i> Tabelas</span>
+                        <span class="badge bg-light text-dark"><i class="fas fa-file-export me-1"></i> Exportável</span>
+                    </div>
+                </div>
+                <div class="report-footer text-center">
+                    <a href="/dashboard/reports/statistics_report" class="btn btn-warning w-100">
+                        <i class="fas fa-eye me-1"></i> Visualizar Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Relatório Personalizado -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card report-card shadow">
+                <div class="report-header report-secondary">
+                    <div class="report-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h5 class="card-title">Relatório Personalizado</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Crie relatórios personalizados com os filtros de sua escolha, selecionando exatamente os dados que você precisa analisar.</p>
+                    <div class="d-flex mt-3 mb-2">
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-sliders-h me-1"></i> Personalizável</span>
+                        <span class="badge bg-light text-dark me-2"><i class="fas fa-save me-1"></i> Salvável</span>
+                        <span class="badge bg-light text-dark"><i class="fas fa-file-export me-1"></i> Exportável</span>
+                    </div>
+                </div>
+                <div class="report-footer text-center">
+                    <a href="/dashboard/reports/custom_report" class="btn btn-secondary w-100">
+                        <i class="fas fa-plus me-1"></i> Criar Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Relatórios Recentes -->
+    <div class="card shadow mb-4">
+        <div class="recent-reports-header">
+            <h5 class="mb-0">
+                <i class="fas fa-history me-2"></i>
+                Relatórios Recentes
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if recent_reports %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Relatório</th>
+                            <th>Data de Geração</th>
+                            <th>Gerado por</th>
+                            <th>Filtros</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in recent_reports %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-alt text-primary me-2"></i>
+                                    <div>
+                                        <strong>{{ report.name }}</strong>
+                                        {% if report.is_scheduled %}
+                                        <span class="filter-badge scheduled-badge ms-2"><i class="fas fa-clock me-1"></i> Agendado</span>
+                                        {% endif %}
+                                        {% if report.is_favorite %}
+                                        <span class="filter-badge favorite-badge ms-2"><i class="fas fa-star me-1"></i> Favorito</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ report.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ report.user_name }}</td>
+                            <td>
+                                <div class="d-flex flex-wrap">
+                                    {% for filter in report.filters_list %}
+                                    <span class="filter-badge bg-light text-dark">{{ filter }}</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ report.url }}" class="btn btn-sm btn-info" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ report.download_url }}" class="btn btn-sm btn-success" title="Baixar">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-warning" title="Favoritar"
+                                            onclick="toggleFavorite('{{ report.id }}')">
+                                        <i class="fas {% if report.is_favorite %}fa-star{% else %}fa-star-o{% endif %}"></i>
+                                    </button>
+                                    {% if report.user_id == request.user.id or request.user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR'] %}
+                                    <button type="button" class="btn btn-sm btn-danger" title="Excluir"
+                                            onclick="deleteReport('{{ report.id }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Nenhum relatório foi gerado recentemente.
+                <a href="/dashboard/reports/custom_report" class="alert-link">Clique aqui</a> para criar seu primeiro relatório.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Relatórios Agendados -->
+    {% if request.user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR'] %}
+    <div class="card shadow">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>
+                    Relatórios Agendados
+                </h5>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleReportModal">
+                    <i class="fas fa-plus me-1"></i> Agendar Relatório
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if scheduled_reports %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Relatório</th>
+                            <th>Frequência</th>
+                            <th>Próxima Execução</th>
+                            <th>Destinatários</th>
+                            <th>Criado por</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in scheduled_reports %}
+                        <tr>
+                            <td>{{ report.name }}</td>
+                            <td>{{ report.frequency }}</td>
+                            <td>{{ report.next_execution.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ report.recipients }}</td>
+                            <td>{{ report.user_name }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ report.edit_url }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" title="Excluir"
+                                            onclick="deleteScheduledReport('{{ report.id }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Nenhum relatório agendado.
+                <button type="button" class="btn btn-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#scheduleReportModal">
+                    <i class="fas fa-plus me-1"></i> Agendar Relatório
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Agendamento de Relatório -->
+<div class="modal fade" id="scheduleReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agendar Relatório</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/dashboard/reports/schedule">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <!-- Tipo de Relatório -->
+                        <div class="col-md-6">
+                            <label for="report_type" class="form-label">Tipo de Relatório *</label>
+                            <select class="form-select" id="report_type" name="report_type" required>
+                                <option value="">Selecione um tipo</option>
+                                <option value="occupancy">Relatório de Ocupação</option>
+                                <option value="department">Relatório por Departamento</option>
+                                <option value="user">Relatório por Usuário</option>
+                                <option value="maintenance">Relatório de Manutenção</option>
+                                <option value="statistics">Estatísticas Gerais</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Frequência -->
+                        <div class="col-md-6">
+                            <label for="frequency" class="form-label">Frequência *</label>
+                            <select class="form-select" id="frequency" name="frequency" required>
+                                <option value="">Selecione uma frequência</option>
+                                <option value="daily">Diário</option>
+                                <option value="weekly">Semanal</option>
+                                <option value="monthly">Mensal</option>
+                                <option value="quarterly">Trimestral</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <!-- Data de Início -->
+                        <div class="col-md-6">
+                            <label for="start_date" class="form-label">Data de Início *</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+                        
+                        <!-- Hora de Execução -->
+                        <div class="col-md-6">
+                            <label for="execution_time" class="form-label">Hora de Execução *</label>
+                            <input type="time" class="form-control" id="execution_time" name="execution_time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <!-- Destinatários -->
+                        <label for="recipients" class="form-label">Destinatários (separados por vírgula) *</label>
+                        <input type="text" class="form-control" id="recipients" name="recipients" 
+                               placeholder="Ex: email1@exemplo.com, email2@exemplo.com" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <!-- Descrição -->
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Descrição do relatório agendado..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Filtros</label>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <!-- Departamento -->
+                                    <div class="col-md-6">
+                                        <label for="department_id" class="form-label">Departamento</label>
+                                        <select class="form-select" id="department_id" name="department_id">
+                                            <option value="">Todos</option>
+                                            {% for department in departments %}
+                                            <option value="{{ department.id }}">
+                                                {{ department.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Período de Dados -->
+                                    <div class="col-md-6">
+                                        <label for="data_period" class="form-label">Período de Dados</label>
+                                        <select class="form-select" id="data_period" name="data_period">
+                                            <option value="last_week">Última Semana</option>
+                                            <option value="last_month">Último Mês</option>
+                                            <option value="last_quarter">Último Trimestre</option>
+                                            <option value="last_year">Último Ano</option>
+                                            <option value="all_time">Todo o Período</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="include_charts" name="include_charts" checked>
+                                    <label class="form-check-label" for="include_charts">
+                                        Incluir gráficos
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="include_tables" name="include_tables" checked>
+                                    <label class="form-check-label" for="include_tables">
+                                        Incluir tabelas de dados
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Excluir relatório
+    function deleteReport(reportId) {
+        if (confirm('Tem certeza que deseja excluir este relatório?')) {
+            fetch(`/dashboard/reports/${reportId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erro ao excluir relatório');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao excluir relatório');
+            });
+        }
+    }
+    
+    // Excluir relatório agendado
+    function deleteScheduledReport(reportId) {
+        if (confirm('Tem certeza que deseja excluir este agendamento de relatório?')) {
+            fetch(`/dashboard/reports/schedule/${reportId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erro ao excluir agendamento');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao excluir agendamento');
+            });
+        }
+    }
+</script>
+{% endblock %}

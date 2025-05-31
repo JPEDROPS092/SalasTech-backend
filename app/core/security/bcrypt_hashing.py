@@ -2,7 +2,7 @@ from time import time
 from random import randint
 
 from passlib.context import CryptContext
-from core.config import CONFIG
+from app.core.config import CONFIG
 
 
 CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")

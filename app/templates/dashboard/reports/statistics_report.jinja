@@ -1,0 +1,525 @@
+{% extends "base.jinja" %}
+
+{% block title %}Estatísticas Gerais - Sistema de Gerenciamento de Salas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        height: 400px;
+    }
+    .filter-card {
+        position: sticky;
+        top: 20px;
+    }
+    .stat-card {
+        transition: transform 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">
+            <i class="fas fa-chart-line me-2"></i>
+            Estatísticas Gerais
+        </h1>
+        
+        <div>
+            <a href="/dashboard/reports" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+            <button type="button" class="btn btn-success" id="export-report">
+                <i class="fas fa-file-excel me-1"></i> Exportar
+            </button>
+            <button type="button" class="btn btn-primary" id="print-report">
+                <i class="fas fa-print me-1"></i> Imprimir
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Filtros -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow filter-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Filtros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="/dashboard/reports/statistics_report">
+                        <!-- Período -->
+                        <div class="mb-3">
+                            <label for="period" class="form-label">Período</label>
+                            <select class="form-select" id="period" name="period">
+                                <option value="daily" {% if period == 'daily' %}selected{% endif %}>Diário</option>
+                                <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>Semanal</option>
+                                <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Mensal</option>
+                                <option value="quarterly" {% if period == 'quarterly' %}selected{% endif %}>Trimestral</option>
+                                <option value="yearly" {% if period == 'yearly' %}selected{% endif %}>Anual</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Data Início -->
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Data Início</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ start_date.strftime('%Y-%m-%d') if start_date else '' }}">
+                        </div>
+                        
+                        <!-- Data Fim -->
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">Data Fim</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ end_date.strftime('%Y-%m-%d') if end_date else '' }}">
+                        </div>
+                        
+                        <!-- Departamento -->
+                        <div class="mb-3">
+                            <label for="department_id" class="form-label">Departamento</label>
+                            <select class="form-select" id="department_id" name="department_id">
+                                <option value="">Todos</option>
+                                {% for department in departments %}
+                                <option value="{{ department.id }}" {% if selected_department_id == department.id %}selected{% endif %}>
+                                    {{ department.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Botões -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Filtrar
+                            </button>
+                            <a href="/dashboard/reports/statistics_report" class="btn btn-secondary">
+                                <i class="fas fa-redo me-1"></i> Limpar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Conteúdo do Relatório -->
+        <div class="col-lg-9">
+            <!-- Resumo -->
+            <div class="row mb-4">
+                <!-- Total de Salas -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2 stat-card">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Total de Salas</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_rooms }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-door-open fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total de Reservas -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2 stat-card">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Total de Reservas</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_reservations }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usuários Ativos -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2 stat-card">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Usuários Ativos</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_users }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-users fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Taxa de Ocupação -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2 stat-card">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Taxa de Ocupação</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.occupancy_rate|round(2) }}%</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tendência de Reservas -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Tendência de Reservas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container mb-4">
+                        <canvas id="reservationTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Distribuição por Dia da Semana e Hora -->
+            <div class="row mb-4">
+                <!-- Reservas por Dia da Semana -->
+                <div class="col-lg-6">
+                    <div class="card shadow h-100">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calendar-week me-2"></i>
+                                Reservas por Dia da Semana
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="weekdayChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reservas por Hora do Dia -->
+                <div class="col-lg-6">
+                    <div class="card shadow h-100">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-clock me-2"></i>
+                                Reservas por Hora do Dia
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="hourlyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Duração das Reservas -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-hourglass-half me-2"></i>
+                        Duração das Reservas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container mb-4">
+                        <canvas id="durationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comparativo entre Departamentos -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building me-2"></i>
+                        Comparativo entre Departamentos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container mb-4">
+                        <canvas id="departmentComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estatísticas de Capacidade -->
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Estatísticas de Capacidade
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="chart-container mb-4">
+                                <canvas id="capacityDistributionChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Capacidade</th>
+                                            <th>Número de Salas</th>
+                                            <th>% do Total</th>
+                                            <th>Reservas</th>
+                                            <th>Taxa de Ocupação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in capacity_stats %}
+                                        <tr>
+                                            <td>{{ item.capacity_range }}</td>
+                                            <td>{{ item.room_count }}</td>
+                                            <td>{{ item.percentage|round(2) }}%</td>
+                                            <td>{{ item.reservation_count }}</td>
+                                            <td>{{ item.occupancy_rate|round(2) }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Configurar gráfico de tendência de reservas
+    const reservationTrendCtx = document.getElementById('reservationTrendChart').getContext('2d');
+    const reservationTrendChart = new Chart(reservationTrendCtx, {
+        type: 'line',
+        data: {
+            labels: {{ reservation_trend_chart.labels|tojson }},
+            datasets: [{
+                label: 'Número de Reservas',
+                data: {{ reservation_trend_chart.values|tojson }},
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                pointBorderColor: 'rgba(78, 115, 223, 1)',
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Configurar gráfico de reservas por dia da semana
+    const weekdayCtx = document.getElementById('weekdayChart').getContext('2d');
+    const weekdayChart = new Chart(weekdayCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+            datasets: [{
+                label: 'Número de Reservas',
+                data: {{ weekday_chart.values|tojson }},
+                backgroundColor: 'rgba(28, 200, 138, 0.8)',
+                borderColor: 'rgba(28, 200, 138, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Configurar gráfico de reservas por hora do dia
+    const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+    const hourlyChart = new Chart(hourlyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ hourly_chart.labels|tojson }},
+            datasets: [{
+                label: 'Número de Reservas',
+                data: {{ hourly_chart.values|tojson }},
+                backgroundColor: 'rgba(54, 185, 204, 0.05)',
+                borderColor: 'rgba(54, 185, 204, 1)',
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(54, 185, 204, 1)',
+                pointBorderColor: 'rgba(54, 185, 204, 1)',
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'rgba(54, 185, 204, 1)',
+                pointHoverBorderColor: 'rgba(54, 185, 204, 1)',
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Configurar gráfico de duração das reservas
+    const durationCtx = document.getElementById('durationChart').getContext('2d');
+    const durationChart = new Chart(durationCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ duration_chart.labels|tojson }},
+            datasets: [{
+                label: 'Número de Reservas',
+                data: {{ duration_chart.values|tojson }},
+                backgroundColor: 'rgba(246, 194, 62, 0.8)',
+                borderColor: 'rgba(246, 194, 62, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Configurar gráfico de comparativo entre departamentos
+    const departmentComparisonCtx = document.getElementById('departmentComparisonChart').getContext('2d');
+    const departmentComparisonChart = new Chart(departmentComparisonCtx, {
+        type: 'radar',
+        data: {
+            labels: {{ department_comparison_chart.labels|tojson }},
+            datasets: [
+                {
+                    label: 'Número de Salas',
+                    data: {{ department_comparison_chart.room_values|tojson }},
+                    backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(78, 115, 223, 1)'
+                },
+                {
+                    label: 'Número de Reservas',
+                    data: {{ department_comparison_chart.reservation_values|tojson }},
+                    backgroundColor: 'rgba(28, 200, 138, 0.2)',
+                    borderColor: 'rgba(28, 200, 138, 1)',
+                    pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(28, 200, 138, 1)'
+                },
+                {
+                    label: 'Taxa de Ocupação (%)',
+                    data: {{ department_comparison_chart.occupancy_values|tojson }},
+                    backgroundColor: 'rgba(246, 194, 62, 0.2)',
+                    borderColor: 'rgba(246, 194, 62, 1)',
+                    pointBackgroundColor: 'rgba(246, 194, 62, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(246, 194, 62, 1)'
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            elements: {
+                line: {
+                    borderWidth: 3
+                }
+            }
+        }
+    });
+    
+    // Configurar gráfico de distribuição de capacidade
+    const capacityDistributionCtx = document.getElementById('capacityDistributionChart').getContext('2d');
+    const capacityDistributionChart = new Chart(capacityDistributionCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ capacity_chart.labels|tojson }},
+            datasets: [{
+                data: {{ capacity_chart.values|tojson }},
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                    '#5a5c69', '#858796', '#6f42c1', '#20c9a6', '#fd7e14'
+                ],
+                hoverBackgroundColor: [
+                    '#2e59d9', '#17a673', '#2c9faf', '#f4b619', '#e02d1b',
+                    '#4e4f58', '#717384', '#5d37a8', '#1aa88f', '#ee7308'
+                ],
+                hoverBorderColor: 'rgba(234, 236, 244, 1)',
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + ' salas';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Exportar relatório
+    document.getElementById('export-report').addEventListener('click', function() {
+        // Aqui seria implementada a lógica para exportar para Excel
+        alert('Funcionalidade de exportação será implementada em breve!');
+    });
+    
+    // Imprimir relatório
+    document.getElementById('print-report').addEventListener('click', function() {
+        window.print();
+    });
+</script>
+{% endblock %}

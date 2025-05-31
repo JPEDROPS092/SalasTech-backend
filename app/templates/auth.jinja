@@ -1,16 +1,292 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auth</title>
+    <title>{% block title %}Login - IFAM Sistema de Gerenciamento{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #006400;
+            --primary-dark: #004d00;
+            --primary-light: #e8f5e9;
+            --secondary-color: #1976d2;
+            --accent-color: #ff6f00;
+            --text-color: #333333;
+            --light-text: #6c757d;
+            --bg-light: #f8f9fa;
+            --bg-dark: #343a40;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .auth-container {
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            background-color: #fff;
+            display: flex;
+        }
+        
+        .auth-image {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auth-image::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
+            z-index: 1;
+        }
+        
+        .auth-image-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .auth-form {
+            flex: 1;
+            padding: 40px;
+            background-color: white;
+        }
+        
+        .auth-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        
+        .auth-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .auth-subtitle {
+            font-size: 1.1rem;
+            font-weight: 300;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .auth-feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .auth-feature i {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .form-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .form-subtitle {
+            font-size: 1rem;
+            color: var(--light-text);
+            margin-bottom: 30px;
+        }
+        
+        .form-control {
+            height: 50px;
+            border-radius: 10px;
+            padding-left: 15px;
+            font-size: 1rem;
+            border: 1px solid #ced4da;
+            margin-bottom: 20px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 100, 0, 0.25);
+        }
+        
+        .input-group-text {
+            border-radius: 10px 0 0 10px;
+            background-color: #f8f9fa;
+            border-right: none;
+        }
+        
+        .form-control.left-border-none {
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            height: 50px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 100, 0, 0.3);
+        }
+        
+        .btn-outline-secondary {
+            border-color: #ced4da;
+            color: var(--light-text);
+            height: 50px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #f8f9fa;
+            color: var(--text-color);
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--light-text);
+            font-size: 0.9rem;
+        }
+        
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .auth-container {
+                flex-direction: column;
+            }
+            
+            .auth-image {
+                padding: 30px;
+            }
+            
+            .auth-form {
+                padding: 30px;
+            }
+            
+            .auth-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-    <h1>Auth page Jinja templating</h1>
-    <h2>{{user.role}}</h2>
-    <h3><a href="/">Main</a></h3>
+    <div class="auth-container">
+        <div class="auth-image">
+            <div class="auth-image-content">
+                <img src="https://www2.ifam.edu.br/campus/manaus-centro/arquivos/logomarca-IFAM-01.png/@@images/image.png" alt="IFAM Logo" class="auth-logo">
+                <h1 class="auth-title">Sistema de Gerenciamento</h1>
+                <p class="auth-subtitle">Instituto Federal do Amazonas</p>
+                
+                <div class="auth-features mt-5">
+                    <div class="auth-feature">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Gerenciamento completo de salas e recursos</span>
+                    </div>
+                    <div class="auth-feature">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Reservas simplificadas e intuitivas</span>
+                    </div>
+                    <div class="auth-feature">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Relatórios detalhados de utilização</span>
+                    </div>
+                    <div class="auth-feature">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Interface moderna e responsiva</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="auth-form">
+            {% block auth_content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block scripts %}{% endblock %}
 </body>
-
 </html>

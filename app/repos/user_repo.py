@@ -1,5 +1,5 @@
-from models.db import UserDb
-from core.db_context import session_maker
+from app.models.db import UserDb
+from app.core.db_context import session_maker
 
 
 def add(user: UserDb)-> UserDb:

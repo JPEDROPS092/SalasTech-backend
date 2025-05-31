@@ -1,0 +1,243 @@
+{% extends "base.jinja" %}
+
+{% block title %}{{ room.name }} - Detalhes da Sala{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">
+            <i class="fas fa-door-open me-2"></i>
+            {{ room.name }} <small class="text-muted">({{ room.code }})</small>
+        </h1>
+        
+        <div>
+            <a href="/rooms" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+            <a href="/reservations/new?room_id={{ room.id }}" class="btn btn-success">
+                <i class="fas fa-bookmark me-1"></i> Reservar Sala
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Detalhes da Sala -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informações da Sala</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Código:</strong> {{ room.code }}</p>
+                            <p><strong>Nome:</strong> {{ room.name }}</p>
+                            <p><strong>Capacidade:</strong> {{ room.capacity }} pessoas</p>
+                            <p><strong>Localização:</strong> {{ room.building }}, {{ room.floor }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Status:</strong> 
+                                {% if room.status == 'ATIVA' %}
+                                <span class="badge bg-success">Ativa</span>
+                                {% elif room.status == 'INATIVA' %}
+                                <span class="badge bg-secondary">Inativa</span>
+                                {% elif room.status == 'MANUTENCAO' %}
+                                <span class="badge bg-warning">Em Manutenção</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ room.status }}</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Departamento:</strong> {{ room.department_name }}</p>
+                            <p><strong>Responsável:</strong> {{ room.responsible or 'Não informado' }}</p>
+                            <p><strong>Criada em:</strong> {{ room.created_at.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if room.description %}
+                    <div class="mb-3">
+                        <h6>Descrição:</h6>
+                        <p>{{ room.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if room.resources %}
+                    <div>
+                        <h6>Recursos Disponíveis:</h6>
+                        <ul class="list-group">
+                            {% for resource in room.resources %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ resource.resource_name }}
+                                {% if resource.quantity > 1 %}
+                                <span class="badge bg-primary rounded-pill">{{ resource.quantity }}</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    {% if request.user and request.user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR'] %}
+                    <div class="btn-group" role="group">
+                        <a href="/rooms/{{ room.id }}/edit" class="btn btn-warning">
+                            <i class="fas fa-edit me-1"></i> Editar
+                        </a>
+                        {% if room.status == 'ATIVA' %}
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#maintenanceModal">
+                            <i class="fas fa-tools me-1"></i> Agendar Manutenção
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Disponibilidade -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Disponibilidade</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert {% if availability.available %}alert-success{% else %}alert-danger{% endif %} mb-4">
+                        <h6 class="alert-heading">
+                            {% if availability.available %}
+                            <i class="fas fa-check-circle me-1"></i> Sala Disponível
+                            {% else %}
+                            <i class="fas fa-times-circle me-1"></i> Sala Indisponível
+                            {% endif %}
+                        </h6>
+                        <p class="mb-0">
+                            {% if availability.available %}
+                            Esta sala está disponível para reservas no momento.
+                            {% else %}
+                            {% if room.status != 'ATIVA' %}
+                            Esta sala não está ativa no momento. Status atual: {{ room.status }}.
+                            {% else %}
+                            Esta sala possui reservas conflitantes no período consultado.
+                            {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <h6>Estatísticas de Utilização:</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Total de Reservas:</strong> {{ utilization.total_reservations }}</p>
+                            <p><strong>Total de Horas:</strong> {{ utilization.total_hours|round(1) }} horas</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Taxa de Ocupação:</strong> {{ utilization.occupancy_rate|round(1) }}%</p>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ utilization.occupancy_rate }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="/rooms/{{ room.id }}/calendar" class="btn btn-primary">
+                            <i class="fas fa-calendar-alt me-1"></i> Ver Calendário Completo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Próximas Reservas -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>Próximas Reservas</h5>
+        </div>
+        <div class="card-body">
+            {% if reservations %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Data/Hora Início</th>
+                            <th>Data/Hora Fim</th>
+                            <th>Usuário</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in reservations %}
+                        <tr>
+                            <td>{{ reservation.title }}</td>
+                            <td>{{ reservation.start_datetime.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ reservation.end_datetime.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ reservation.user_name }}</td>
+                            <td>
+                                {% if reservation.status == 'PENDENTE' %}
+                                <span class="badge bg-warning">Pendente</span>
+                                {% elif reservation.status == 'CONFIRMADA' %}
+                                <span class="badge bg-success">Confirmada</span>
+                                {% elif reservation.status == 'EM_ANDAMENTO' %}
+                                <span class="badge bg-primary">Em Andamento</span>
+                                {% elif reservation.status == 'FINALIZADA' %}
+                                <span class="badge bg-secondary">Finalizada</span>
+                                {% elif reservation.status == 'CANCELADA' %}
+                                <span class="badge bg-danger">Cancelada</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ reservation.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="/reservations/{{ reservation.id }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Não há reservas agendadas para esta sala no período consultado.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Manutenção -->
+{% if request.user and request.user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR'] %}
+<div class="modal fade" id="maintenanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agendar Manutenção</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/rooms/{{ room.id }}/maintenance" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="start_datetime" class="form-label">Data/Hora Início</label>
+                        <input type="datetime-local" class="form-control" id="start_datetime" name="start_datetime" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end_datetime" class="form-label">Data/Hora Fim</label>
+                        <input type="datetime-local" class="form-control" id="end_datetime" name="end_datetime" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

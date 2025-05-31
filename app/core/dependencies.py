@@ -2,8 +2,8 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from models import dto
-from core.security import session
+from app.models import dto
+from app.core.security import session
 
 
 token_dependency = Annotated[dto.Token, Depends(session.get_token)]

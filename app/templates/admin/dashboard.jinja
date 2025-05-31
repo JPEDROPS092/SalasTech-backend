@@ -1,0 +1,767 @@
+{% extends "admin/admin_base.jinja" %}
+
+{% block title %}Dashboard Administrativo - IFAM Sistema de Gerenciamento{% endblock %}
+
+{% block page_title %}Dashboard Administrativo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+    
+    .activity-item {
+        padding: 15px;
+        border-left: 3px solid var(--primary-color);
+        background-color: white;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+    }
+    
+    .activity-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .activity-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    
+    .activity-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .activity-icon-user {
+        background-color: rgba(23, 162, 184, 0.1);
+        color: var(--info);
+    }
+    
+    .activity-icon-room {
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+    }
+    
+    .activity-icon-reservation {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: var(--warning);
+    }
+    
+    .activity-icon-system {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: var(--light-text);
+    }
+    
+    .activity-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-color);
+    }
+    
+    .activity-time {
+        margin-left: auto;
+        font-size: 0.8rem;
+        color: var(--light-text);
+    }
+    
+    .activity-description {
+        font-size: 0.85rem;
+        color: var(--light-text);
+        margin-left: 40px;
+    }
+    
+    .quick-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+        text-decoration: none;
+        color: var(--text-color);
+        height: 100%;
+    }
+    
+    .quick-action:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        color: var(--primary-color);
+    }
+    
+    .quick-action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    
+    .quick-action:hover .quick-action-icon {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .quick-action-title {
+        font-weight: 600;
+        font-size: 1rem;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    
+    .quick-action-description {
+        font-size: 0.8rem;
+        color: var(--light-text);
+        text-align: center;
+    }
+    
+    .alert-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    
+    .alert-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .alert-item-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+    
+    .alert-item-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+    
+    .alert-item-success {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 1.2rem;
+    }
+    
+    .alert-icon-warning {
+        background-color: var(--warning);
+        color: white;
+    }
+    
+    .alert-icon-danger {
+        background-color: var(--danger);
+        color: white;
+    }
+    
+    .alert-icon-success {
+        background-color: var(--success);
+        color: white;
+    }
+    
+    .alert-content {
+        flex: 1;
+    }
+    
+    .alert-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+    
+    .alert-description {
+        font-size: 0.85rem;
+        color: var(--light-text);
+    }
+    
+    .alert-action {
+        margin-left: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Overview -->
+<div class="row">
+    <!-- Total Users -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-primary">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stats-content">
+                    <h5 class="stats-value">{{ stats.users|default('128') }}</h5>
+                    <p class="stats-label">Total de Usuários</p>
+                    <div class="stats-change stats-change-positive">
+                        <i class="bi bi-arrow-up me-1"></i> 12% desde o último mês
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Rooms -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-success">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stats-content">
+                    <h5 class="stats-value">{{ stats.rooms|default('45') }}</h5>
+                    <p class="stats-label">Salas Ativas</p>
+                    <div class="stats-change stats-change-positive">
+                        <i class="bi bi-arrow-up me-1"></i> 5% desde o último mês
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reservations -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-warning">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stats-content">
+                    <h5 class="stats-value">{{ stats.reservations|default('312') }}</h5>
+                    <p class="stats-label">Reservas este Mês</p>
+                    <div class="stats-change stats-change-positive">
+                        <i class="bi bi-arrow-up me-1"></i> 8% desde o último mês
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Health -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-info">
+                    <i class="bi bi-heart-pulse"></i>
+                </div>
+                <div class="stats-content">
+                    <h5 class="stats-value">98%</h5>
+                    <p class="stats-label">Saúde do Sistema</p>
+                    <div class="stats-change stats-change-negative">
+                        <i class="bi bi-arrow-down me-1"></i> 2% desde ontem
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Quick Actions -->
+<div class="row">
+    <!-- Reservation Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Estatísticas de Reservas
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-2" id="refreshChart">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Atualizar
+                    </button>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" data-period="week">Semana</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="month">Mês</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="year">Ano</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="reservationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="bi bi-lightning-charge me-2"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="/admin/users/new" class="quick-action">
+                            <div class="quick-action-icon">
+                                <i class="bi bi-person-plus"></i>
+                            </div>
+                            <h6 class="quick-action-title">Novo Usuário</h6>
+                            <p class="quick-action-description">Adicionar usuário</p>
+                        </a>
+                    </div>
+                    
+                    <div class="col-6">
+                        <a href="/admin/rooms/new" class="quick-action">
+                            <div class="quick-action-icon">
+                                <i class="bi bi-building-add"></i>
+                            </div>
+                            <h6 class="quick-action-title">Nova Sala</h6>
+                            <p class="quick-action-description">Adicionar sala</p>
+                        </a>
+                    </div>
+                    
+                    <div class="col-6">
+                        <a href="/admin/reports/generate" class="quick-action">
+                            <div class="quick-action-icon">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </div>
+                            <h6 class="quick-action-title">Relatório</h6>
+                            <p class="quick-action-description">Gerar relatório</p>
+                        </a>
+                    </div>
+                    
+                    <div class="col-6">
+                        <a href="/admin/settings" class="quick-action">
+                            <div class="quick-action-icon">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <h6 class="quick-action-title">Configurações</h6>
+                            <p class="quick-action-description">Ajustar sistema</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Alerts & Recent Activity -->
+<div class="row">
+    <!-- System Alerts -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Alertas do Sistema
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-eye me-1"></i> Ver Todos
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="alert-item alert-item-danger">
+                    <div class="alert-icon alert-icon-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <h6 class="alert-title">Espaço em Disco Baixo</h6>
+                        <p class="alert-description">O servidor está com menos de 10% de espaço livre.</p>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="alert-item alert-item-warning">
+                    <div class="alert-icon alert-icon-warning">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="alert-content">
+                        <h6 class="alert-title">Backup Pendente</h6>
+                        <p class="alert-description">O último backup foi realizado há 7 dias.</p>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="alert-item alert-item-success">
+                    <div class="alert-icon alert-icon-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <h6 class="alert-title">Atualização Disponível</h6>
+                        <p class="alert-description">Nova versão 2.3.5 disponível para instalação.</p>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="bi bi-activity me-2"></i>
+                    Atividades Recentes
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-eye me-1"></i> Ver Todas
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="activity-item">
+                    <div class="activity-header">
+                        <div class="activity-icon activity-icon-user">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <span class="activity-title">Novo usuário registrado</span>
+                        <span class="activity-time">há 10 minutos</span>
+                    </div>
+                    <p class="activity-description">Maria Silva (maria.silva@ifam.edu.br) criou uma nova conta.</p>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-header">
+                        <div class="activity-icon activity-icon-room">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <span class="activity-title">Sala atualizada</span>
+                        <span class="activity-time">há 45 minutos</span>
+                    </div>
+                    <p class="activity-description">Sala 204 foi atualizada: capacidade alterada de 30 para 35 pessoas.</p>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-header">
+                        <div class="activity-icon activity-icon-reservation">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <span class="activity-title">Reserva aprovada</span>
+                        <span class="activity-time">há 2 horas</span>
+                    </div>
+                    <p class="activity-description">Reserva #1234 para Auditório Principal foi aprovada para 15/06/2023.</p>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-header">
+                        <div class="activity-icon activity-icon-system">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                        <span class="activity-title">Configuração alterada</span>
+                        <span class="activity-time">há 3 horas</span>
+                    </div>
+                    <p class="activity-description">Política de reservas foi atualizada: tempo mínimo de antecedência alterado para 48h.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Approvals & Room Occupancy -->
+<div class="row">
+    <!-- Pending Approvals -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="bi bi-hourglass-split me-2"></i>
+                    Aprovações Pendentes
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-eye me-1"></i> Ver Todas
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Solicitante</th>
+                                <th>Sala</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#1238</td>
+                                <td>João Santos</td>
+                                <td>Laboratório 101</td>
+                                <td>15/06/2023 14:00-16:00</td>
+                                <td>
+                                    <a href="#" class="table-action table-action-view">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="#" class="table-action table-action-edit">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="#" class="table-action table-action-delete">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1237</td>
+                                <td>Ana Oliveira</td>
+                                <td>Auditório Principal</td>
+                                <td>18/06/2023 09:00-12:00</td>
+                                <td>
+                                    <a href="#" class="table-action table-action-view">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="#" class="table-action table-action-edit">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="#" class="table-action table-action-delete">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1236</td>
+                                <td>Carlos Mendes</td>
+                                <td>Sala de Reuniões 3</td>
+                                <td>20/06/2023 13:30-15:30</td>
+                                <td>
+                                    <a href="#" class="table-action table-action-view">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="#" class="table-action table-action-edit">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="#" class="table-action table-action-delete">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Room Occupancy -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="bi bi-bar-chart me-2"></i>
+                    Ocupação de Salas
+                </h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active">Diária</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary">Semanal</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="occupancyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Reservation Chart
+    const reservationCtx = document.getElementById('reservationChart').getContext('2d');
+    const reservationChart = new Chart(reservationCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            datasets: [{
+                label: 'Reservas',
+                data: [250, 320, 280, 305, 350, 312, 400, 380, 410, 390, 405, 430],
+                backgroundColor: 'rgba(0, 100, 0, 0.1)',
+                borderColor: '#006400',
+                borderWidth: 2,
+                tension: 0.3,
+                pointBackgroundColor: '#006400',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: 10,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Occupancy Chart
+    const occupancyCtx = document.getElementById('occupancyChart').getContext('2d');
+    const occupancyChart = new Chart(occupancyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Auditório', 'Lab 101', 'Lab 102', 'Sala 201', 'Sala 202', 'Sala 203'],
+            datasets: [{
+                label: 'Ocupação (%)',
+                data: [85, 65, 78, 45, 60, 70],
+                backgroundColor: [
+                    'rgba(220, 53, 69, 0.7)',
+                    'rgba(255, 193, 7, 0.7)',
+                    'rgba(255, 193, 7, 0.7)',
+                    'rgba(40, 167, 69, 0.7)',
+                    'rgba(255, 193, 7, 0.7)',
+                    'rgba(255, 193, 7, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(220, 53, 69, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(40, 167, 69, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(255, 193, 7, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Period buttons for reservation chart
+    document.querySelectorAll('[data-period]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('[data-period]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            const period = this.getAttribute('data-period');
+            let labels, data;
+            
+            switch(period) {
+                case 'week':
+                    labels = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+                    data = [45, 60, 75, 80, 65, 30, 20];
+                    break;
+                case 'month':
+                    labels = Array.from({length: 30}, (_, i) => i + 1);
+                    data = Array.from({length: 30}, () => Math.floor(Math.random() * 30) + 10);
+                    break;
+                case 'year':
+                    labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    data = [250, 320, 280, 305, 350, 312, 400, 380, 410, 390, 405, 430];
+                    break;
+            }
+            
+            reservationChart.data.labels = labels;
+            reservationChart.data.datasets[0].data = data;
+            reservationChart.update();
+        });
+    });
+    
+    // Refresh chart button
+    document.getElementById('refreshChart').addEventListener('click', function() {
+        const data = reservationChart.data.datasets[0].data;
+        const newData = data.map(value => {
+            const change = Math.floor(Math.random() * 50) - 25;
+            return Math.max(0, value + change);
+        });
+        
+        reservationChart.data.datasets[0].data = newData;
+        reservationChart.update();
+        
+        // Show notification
+        alert('Dados atualizados com sucesso!');
+    });
+</script>
+{% endblock %}

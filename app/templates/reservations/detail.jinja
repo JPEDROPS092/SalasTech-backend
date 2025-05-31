@@ -1,0 +1,376 @@
+{% extends "base.jinja" %}
+
+{% block title %}Detalhes da Reserva - Sistema de Gerenciamento de Salas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">
+            <i class="fas fa-calendar-check me-2"></i>
+            Detalhes da Reserva
+        </h1>
+        
+        <div>
+            <a href="/reservations" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+            
+            {% if reservation.status in ['PENDENTE', 'CONFIRMADA'] and (reservation.user_id == request.user.id or request.user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR']) %}
+            <a href="/reservations/{{ reservation.id }}/edit" class="btn btn-warning me-2">
+                <i class="fas fa-edit me-1"></i> Editar
+            </a>
+            
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                <i class="fas fa-ban me-1"></i> Cancelar
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Status da Reserva -->
+    <div class="alert 
+        {% if reservation.status == 'PENDENTE' %}
+        alert-warning
+        {% elif reservation.status == 'CONFIRMADA' %}
+        alert-success
+        {% elif reservation.status == 'EM_ANDAMENTO' %}
+        alert-primary
+        {% elif reservation.status == 'FINALIZADA' %}
+        alert-secondary
+        {% elif reservation.status == 'CANCELADA' %}
+        alert-danger
+        {% else %}
+        alert-secondary
+        {% endif %}">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas 
+                    {% if reservation.status == 'PENDENTE' %}
+                    fa-clock
+                    {% elif reservation.status == 'CONFIRMADA' %}
+                    fa-check-circle
+                    {% elif reservation.status == 'EM_ANDAMENTO' %}
+                    fa-play-circle
+                    {% elif reservation.status == 'FINALIZADA' %}
+                    fa-check-double
+                    {% elif reservation.status == 'CANCELADA' %}
+                    fa-ban
+                    {% else %}
+                    fa-info-circle
+                    {% endif %} me-2"></i>
+                <strong>Status:</strong> 
+                {% if reservation.status == 'PENDENTE' %}
+                Pendente
+                {% elif reservation.status == 'CONFIRMADA' %}
+                Confirmada
+                {% elif reservation.status == 'EM_ANDAMENTO' %}
+                Em Andamento
+                {% elif reservation.status == 'FINALIZADA' %}
+                Finalizada
+                {% elif reservation.status == 'CANCELADA' %}
+                Cancelada
+                {% else %}
+                {{ reservation.status }}
+                {% endif %}
+            </div>
+            
+            {% if reservation.status == 'PENDENTE' and request.user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR'] %}
+            <div>
+                <button type="button" class="btn btn-success btn-sm me-2" onclick="approveReservation({{ reservation.id }})">
+                    <i class="fas fa-check me-1"></i> Aprovar
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="fas fa-times me-1"></i> Rejeitar
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Detalhes da Reserva -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informações da Reserva
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h4>{{ reservation.title }}</h4>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Data/Hora Início:</strong>
+                            <div>{{ reservation.start_datetime.strftime('%d/%m/%Y %H:%M') }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data/Hora Fim:</strong>
+                            <div>{{ reservation.end_datetime.strftime('%d/%m/%Y %H:%M') }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Duração:</strong>
+                            <div>{{ duration }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Participantes:</strong>
+                            <div>{{ reservation.participants|default('Não informado', true) }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Descrição:</strong>
+                            <div>{{ reservation.description|default('Sem descrição', true) }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if reservation.resources %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Recursos Necessários:</strong>
+                            <ul class="list-group mt-2">
+                                {% for resource in reservation.resources %}
+                                <li class="list-group-item">{{ resource }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if reservation.other_resources %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Outros Recursos:</strong>
+                            <div>{{ reservation.other_resources }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if reservation.notes %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Observações:</strong>
+                            <div>{{ reservation.notes }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if reservation.status == 'CANCELADA' and reservation.cancellation_reason %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-danger">
+                                <strong>Motivo do Cancelamento:</strong>
+                                <div>{{ reservation.cancellation_reason }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">
+                                Criado em: {{ reservation.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </small>
+                        </div>
+                        <div>
+                            <small class="text-muted">
+                                Última atualização: {{ reservation.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Histórico da Reserva -->
+            {% if reservation_history %}
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Histórico da Reserva
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Ação</th>
+                                    <th>Usuário</th>
+                                    <th>Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for history in reservation_history %}
+                                <tr>
+                                    <td>{{ history.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ history.action }}</td>
+                                    <td>{{ history.user_name }}</td>
+                                    <td>{{ history.details }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Informações da Sala e Usuário -->
+        <div class="col-md-4">
+            <!-- Informações da Sala -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-door-open me-2"></i>
+                        Informações da Sala
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h5>{{ room.code }} - {{ room.name }}</h5>
+                    <p>
+                        <strong>Localização:</strong> {{ room.building }}, {{ room.floor }}<br>
+                        <strong>Departamento:</strong> {{ room.department_name }}<br>
+                        <strong>Capacidade:</strong> {{ room.capacity }} pessoas<br>
+                        <strong>Status:</strong> {{ room.status_label }}
+                    </p>
+                    
+                    {% if room.resources %}
+                    <strong>Recursos Disponíveis:</strong>
+                    <ul class="list-group mt-2">
+                        {% for resource in room.resources %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ resource.resource_name }}
+                            <span class="badge bg-primary rounded-pill">{{ resource.quantity }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="/rooms/{{ room.id }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i> Ver Detalhes da Sala
+                        </a>
+                        <a href="/rooms/{{ room.id }}/calendar" class="btn btn-primary btn-sm mt-2">
+                            <i class="fas fa-calendar-alt me-1"></i> Ver Calendário da Sala
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informações do Usuário -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Informações do Solicitante
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h5>{{ user.name }} {{ user.surname }}</h5>
+                    <p>
+                        <strong>Email:</strong> {{ user.email }}<br>
+                        <strong>Departamento:</strong> {{ user.department_name|default('Não informado', true) }}<br>
+                        <strong>Função:</strong> {{ user.role_label }}
+                    </p>
+                    
+                    {% if request.user.role in ['ADMIN', 'ADMINISTRADOR', 'GESTOR'] %}
+                    <div class="mt-3">
+                        <a href="/users/{{ user.id }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i> Ver Perfil do Usuário
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Rejeição -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rejeitar Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectForm" method="post" action="/reservations/{{ reservation.id }}/reject">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Motivo da Rejeição *</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Rejeitar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cancelamento -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancelar Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cancelForm" method="post" action="/reservations/{{ reservation.id }}/cancel">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="cancellation_reason" class="form-label">Motivo do Cancelamento *</label>
+                        <textarea class="form-control" id="cancellation_reason" name="reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+                    <button type="submit" class="btn btn-danger">Cancelar Reserva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Aprovar reserva
+    function approveReservation(id) {
+        if (confirm('Tem certeza que deseja aprovar esta reserva?')) {
+            fetch(`/reservations/${id}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erro ao aprovar reserva');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao aprovar reserva');
+            });
+        }
+    }
+</script>
+{% endblock %}

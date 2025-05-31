@@ -1,0 +1,522 @@
+{% extends "base.jinja" %}
+
+{% block title %}Dashboard de Gestor - IFAM Sistema de Gerenciamento{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        padding: 20px;
+        border-radius: 10px;
+        background-color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+        height: 100%;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .stats-icon-primary {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+    
+    .stats-icon-success {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+    
+    .stats-icon-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+    
+    .stats-icon-info {
+        background-color: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+    }
+    
+    .stats-title {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .stats-value {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .stats-desc {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+    
+    .approval-item {
+        padding: 15px;
+        border-left: 3px solid #0d6efd;
+        background-color: white;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+    }
+    
+    .approval-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .approval-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    
+    .approval-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+    
+    .approval-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .approval-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .approval-detail {
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+    
+    .approval-detail i {
+        margin-right: 5px;
+        color: #0d6efd;
+    }
+    
+    .approval-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .activity-item {
+        padding: 15px;
+        border-left: 3px solid #0d6efd;
+        background-color: white;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+    }
+    
+    .activity-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .activity-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    
+    .activity-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .activity-icon-reservation {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+    
+    .activity-icon-approval {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+    
+    .activity-icon-cancellation {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    
+    .activity-title {
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .activity-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-left: auto;
+    }
+    
+    .activity-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-left: 40px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Dashboard de Gestor</h1>
+        <div>
+            <span class="text-muted me-2">Horário do Servidor:</span>
+            <span class="badge bg-secondary">{{ date }}</span>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <!-- Total Salas -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-primary">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <div class="stats-title">Total de Salas</div>
+                <div class="stats-value">{{ stats.total_rooms }}</div>
+                <div class="stats-desc">
+                    <span class="text-success">
+                        <i class="fas fa-arrow-up me-1"></i>5%
+                    </span>
+                    desde o último mês
+                </div>
+            </div>
+        </div>
+        
+        <!-- Salas Disponíveis -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-title">Salas Disponíveis</div>
+                <div class="stats-value">{{ stats.available_rooms }}</div>
+                <div class="stats-desc">
+                    <span class="text-success">
+                        <i class="fas fa-arrow-up me-1"></i>3%
+                    </span>
+                    desde o último mês
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reservas Pendentes -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stats-title">Aprovações Pendentes</div>
+                <div class="stats-value">{{ stats.pending_reservations }}</div>
+                <div class="stats-desc">
+                    <span class="text-danger">
+                        <i class="fas fa-arrow-down me-1"></i>2%
+                    </span>
+                    desde o último mês
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Reservas -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon stats-icon-info">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stats-title">Total de Reservas</div>
+                <div class="stats-value">{{ stats.total_reservations }}</div>
+                <div class="stats-desc">
+                    <span class="text-success">
+                        <i class="fas fa-arrow-up me-1"></i>10%
+                    </span>
+                    desde o último mês
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Approvals & Recent Activity -->
+    <div class="row mb-4">
+        <!-- Pending Approvals -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks me-2 text-primary"></i>
+                        Aprovações Pendentes
+                    </h5>
+                    <a href="/reservations/pending" class="btn btn-sm btn-outline-primary">Ver Todas</a>
+                </div>
+                <div class="card-body">
+                    <div class="approval-item">
+                        <div class="approval-header">
+                            <h5 class="approval-title">Laboratório de Informática</h5>
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        </div>
+                        <div class="approval-date mb-2">
+                            <i class="fas fa-calendar-day me-1"></i> Segunda-feira, 02 de Junho, 2025
+                        </div>
+                        <div class="approval-details">
+                            <div class="approval-detail">
+                                <i class="fas fa-clock"></i> 08:00 - 10:00
+                            </div>
+                            <div class="approval-detail">
+                                <i class="fas fa-map-marker-alt"></i> Bloco A, Sala 101
+                            </div>
+                            <div class="approval-detail">
+                                <i class="fas fa-user"></i> Solicitante: João Silva
+                            </div>
+                        </div>
+                        <div class="approval-actions">
+                            <button class="btn btn-success btn-sm">
+                                <i class="fas fa-check me-1"></i> Aprovar
+                            </button>
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fas fa-times me-1"></i> Rejeitar
+                            </button>
+                            <button class="btn btn-info btn-sm">
+                                <i class="fas fa-info-circle me-1"></i> Detalhes
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="approval-item">
+                        <div class="approval-header">
+                            <h5 class="approval-title">Sala de Reuniões</h5>
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        </div>
+                        <div class="approval-date mb-2">
+                            <i class="fas fa-calendar-day me-1"></i> Quarta-feira, 04 de Junho, 2025
+                        </div>
+                        <div class="approval-details">
+                            <div class="approval-detail">
+                                <i class="fas fa-clock"></i> 14:00 - 16:00
+                            </div>
+                            <div class="approval-detail">
+                                <i class="fas fa-map-marker-alt"></i> Bloco B, Sala 205
+                            </div>
+                            <div class="approval-detail">
+                                <i class="fas fa-user"></i> Solicitante: Maria Oliveira
+                            </div>
+                        </div>
+                        <div class="approval-actions">
+                            <button class="btn btn-success btn-sm">
+                                <i class="fas fa-check me-1"></i> Aprovar
+                            </button>
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fas fa-times me-1"></i> Rejeitar
+                            </button>
+                            <button class="btn btn-info btn-sm">
+                                <i class="fas fa-info-circle me-1"></i> Detalhes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2 text-primary"></i>
+                        Atividades Recentes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for activity in stats.recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-header">
+                            <div class="activity-icon activity-icon-{{ activity.type }}">
+                                {% if activity.type == 'reservation' %}
+                                    <i class="fas fa-calendar-plus"></i>
+                                {% elif activity.type == 'approval' %}
+                                    <i class="fas fa-check"></i>
+                                {% elif activity.type == 'cancellation' %}
+                                    <i class="fas fa-times"></i>
+                                {% endif %}
+                            </div>
+                            <div class="activity-title">{{ activity.title }}</div>
+                            <div class="activity-time">{{ activity.time }}</div>
+                        </div>
+                        <div class="activity-description">{{ activity.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Occupancy Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                        Taxa de Ocupação das Salas
+                    </h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" data-period="week">Semana</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="month">Mês</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="year">Ano</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="occupancyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Occupancy Chart
+    const occupancyCtx = document.getElementById('occupancyChart').getContext('2d');
+    const occupancyChart = new Chart(occupancyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Lab. Informática', 'Sala de Reuniões', 'Auditório', 'Sala 101', 'Sala 102', 'Sala 103', 'Sala 104'],
+            datasets: [{
+                label: 'Taxa de Ocupação (%)',
+                data: [85, 65, 90, 45, 70, 55, 30],
+                backgroundColor: [
+                    'rgba(13, 110, 253, 0.7)',
+                    'rgba(13, 110, 253, 0.7)',
+                    'rgba(13, 110, 253, 0.7)',
+                    'rgba(13, 110, 253, 0.7)',
+                    'rgba(13, 110, 253, 0.7)',
+                    'rgba(13, 110, 253, 0.7)',
+                    'rgba(13, 110, 253, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(13, 110, 253, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#ffffff',
+                    titleColor: '#000000',
+                    bodyColor: '#000000',
+                    borderColor: '#e9ecef',
+                    borderWidth: 1,
+                    padding: 10,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
+                        label: function(context) {
+                            return `Ocupação: ${context.raw}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Period buttons
+    document.querySelectorAll('[data-period]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('[data-period]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            const period = this.getAttribute('data-period');
+            
+            // Update chart data based on period
+            if (period === 'week') {
+                occupancyChart.data.labels = ['Lab. Informática', 'Sala de Reuniões', 'Auditório', 'Sala 101', 'Sala 102', 'Sala 103', 'Sala 104'];
+                occupancyChart.data.datasets[0].data = [85, 65, 90, 45, 70, 55, 30];
+            } else if (period === 'month') {
+                occupancyChart.data.labels = ['Lab. Informática', 'Sala de Reuniões', 'Auditório', 'Sala 101', 'Sala 102', 'Sala 103', 'Sala 104'];
+                occupancyChart.data.datasets[0].data = [75, 60, 85, 50, 65, 45, 35];
+            } else if (period === 'year') {
+                occupancyChart.data.labels = ['Lab. Informática', 'Sala de Reuniões', 'Auditório', 'Sala 101', 'Sala 102', 'Sala 103', 'Sala 104'];
+                occupancyChart.data.datasets[0].data = [80, 70, 95, 60, 75, 50, 40];
+            }
+            
+            occupancyChart.update();
+        });
+    });
+</script>
+{% endblock %}
