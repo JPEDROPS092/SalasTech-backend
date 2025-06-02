@@ -1,261 +1,91 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useToast } from 'primevue/usetoast';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'nuxt/app';
+import { useReservationStore } from '~/stores/reservation';
+import { useRoomStore } from '~/stores/room';
 import { useAuth } from '~/composables/use-auth';
+import { useToast } from 'primevue/usetoast';
 
+// Definir metadados da página
+definePageMeta({
+  middleware: ['auth'],
+  public: false
+});
+
+// Composables
 const auth = useAuth();
+const toast = useToast();
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
+const reservationStore = useReservationStore();
+const roomStore = useRoomStore();
 
-// Reservation ID from route
-const reservationId = computed(() => route.params.id as string);
-
-// Reservation data
-const reservation = ref(null);
+// Estado
 const loading = ref(true);
-
-// Dialog visibility
-const cancelDialog = ref(false);
 const editDialog = ref(false);
-
-// Edit form
-const editForm = ref({
-  title: '',
-  description: '',
-  status: ''
-});
-
-// Status options
-const statusOptions = ref([
-  { label: 'Confirmada', value: 'CONFIRMED' },
-  { label: 'Pendente', value: 'PENDING' },
-  { label: 'Cancelada', value: 'CANCELLED' }
-]);
-
-// Validation
+const cancelDialog = ref(false);
 const submitted = ref(false);
 
-// Fetch reservation data
-const fetchReservation = async () => {
-  try {
-    loading.value = true;
-    
-    // Implement API call to get reservation by ID
-    // const response = await api.getReservation(reservationId.value);
-    // reservation.value = response;
-    
-    // Mock data for now
-    setTimeout(() => {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const nextWeek = new Date(today);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      
-      if (reservationId.value === '1') {
-        reservation.value = {
-          id: 1,
-          title: 'Aula de Matemática',
-          description: 'Aula de Cálculo I para turma de Engenharia. Conteúdo: Limites e Derivadas. Trazer calculadora científica.',
-          start_time: today.toISOString(),
-          end_time: new Date(today.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          room_id: 1,
-          room: {
-            id: 1,
-            name: 'Sala 101',
-            capacity: 40,
-            department: 'Departamento Acadêmico',
-            location: 'Bloco A, 1º Andar'
-          },
-          user: {
-            id: 1,
-            name: 'Carlos Silva',
-            email: 'carlos.silva@ifam.edu.br',
-            role: 'PROFESSOR'
-          },
-          status: 'CONFIRMED',
-          created_at: yesterday.toISOString(),
-          updated_at: yesterday.toISOString()
-        };
-      } else if (reservationId.value === '2') {
-        reservation.value = {
-          id: 2,
-          title: 'Aula de Programação',
-          description: 'Aula de Programação Web para turma de Sistemas de Informação. Conteúdo: JavaScript e DOM.',
-          start_time: yesterday.toISOString(),
-          end_time: new Date(yesterday.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          room_id: 2,
-          room: {
-            id: 2,
-            name: 'Laboratório de Informática',
-            capacity: 30,
-            department: 'Departamento de TI',
-            location: 'Bloco B, Térreo'
-          },
-          user: {
-            id: 2,
-            name: 'João Pereira',
-            email: 'joao.pereira@ifam.edu.br',
-            role: 'PROFESSOR'
-          },
-          status: 'CONFIRMED',
-          created_at: new Date(yesterday.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(yesterday.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-        };
-      } else if (reservationId.value === '3') {
-        reservation.value = {
-          id: 3,
-          title: 'Palestra: Inteligência Artificial',
-          description: 'Palestra sobre avanços em IA e suas aplicações. Palestrante: Dr. Roberto Mendes, pesquisador da área de Machine Learning.',
-          start_time: tomorrow.toISOString(),
-          end_time: new Date(tomorrow.getTime() + 3 * 60 * 60 * 1000).toISOString(),
-          room_id: 3,
-          room: {
-            id: 3,
-            name: 'Auditório',
-            capacity: 120,
-            department: 'Departamento Administrativo',
-            location: 'Bloco Central, Térreo'
-          },
-          user: {
-            id: 3,
-            name: 'Roberto Mendes',
-            email: 'roberto.mendes@ifam.edu.br',
-            role: 'PROFESSOR'
-          },
-          status: 'PENDING',
-          created_at: yesterday.toISOString(),
-          updated_at: yesterday.toISOString()
-        };
-      } else if (reservationId.value === '4') {
-        reservation.value = {
-          id: 4,
-          title: 'Reunião de Coordenação',
-          description: 'Reunião mensal de coordenação de cursos. Pauta: Planejamento do próximo semestre, avaliação de professores, orçamento.',
-          start_time: nextWeek.toISOString(),
-          end_time: new Date(nextWeek.getTime() + 1.5 * 60 * 60 * 1000).toISOString(),
-          room_id: 4,
-          room: {
-            id: 4,
-            name: 'Sala de Reuniões',
-            capacity: 15,
-            department: 'Departamento Administrativo',
-            location: 'Bloco Administrativo, 2º Andar'
-          },
-          user: {
-            id: 4,
-            name: 'Maria Santos',
-            email: 'maria.santos@ifam.edu.br',
-            role: 'COORDENADOR'
-          },
-          status: 'PENDING',
-          created_at: yesterday.toISOString(),
-          updated_at: yesterday.toISOString()
-        };
-      } else if (reservationId.value === '5') {
-        reservation.value = {
-          id: 5,
-          title: 'Monitoria de Matemática',
-          description: 'Monitoria para alunos com dificuldade em Cálculo. Foco em exercícios práticos e resolução de problemas.',
-          start_time: tomorrow.toISOString(),
-          end_time: new Date(tomorrow.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          room_id: 1,
-          room: {
-            id: 1,
-            name: 'Sala 101',
-            capacity: 40,
-            department: 'Departamento Acadêmico',
-            location: 'Bloco A, 1º Andar'
-          },
-          user: {
-            id: 5,
-            name: 'Pedro Santos',
-            email: 'pedro.santos@ifam.edu.br',
-            role: 'MONITOR'
-          },
-          status: 'CANCELLED',
-          created_at: yesterday.toISOString(),
-          updated_at: today.toISOString()
-        };
-      } else {
-        // If reservation not found, show error and redirect
-        toast.add({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Reserva não encontrada',
-          life: 3000
-        });
-        router.push('/reservations');
-      }
-      
-      loading.value = false;
-    }, 500);
-  } catch (error) {
-    console.error('Error fetching reservation:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erro',
-      detail: 'Não foi possível carregar os dados da reserva',
-      life: 3000
-    });
-    loading.value = false;
-    router.push('/reservations');
-  }
-};
-
-// Format date
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
-};
-
-// Get status severity
-const getStatusSeverity = (status) => {
-  switch (status) {
-    case 'CONFIRMED':
-      return 'success';
-    case 'PENDING':
-      return 'warning';
-    case 'CANCELLED':
-      return 'danger';
-    default:
-      return 'info';
-  }
-};
-
-// Get status label
-const getStatusLabel = (status) => {
-  switch (status) {
-    case 'CONFIRMED':
-      return 'Confirmada';
-    case 'PENDING':
-      return 'Pendente';
-    case 'CANCELLED':
-      return 'Cancelada';
-    default:
-      return status;
-  }
-};
-
-// Check if user can edit reservation
-const canEditReservation = computed(() => {
-  if (!reservation.value || !auth.user) return false;
-  
-  // In a real app, you would check if the user is the owner or has admin rights
-  return auth.hasAdminAccess || (reservation.value.user.id === auth.user.id);
+// Formulário de edição
+const editForm = ref({
+  id: null,
+  title: '',
+  description: '',
+  start_time: null,
+  end_time: null,
+  room_id: null,
+  status: 'PENDING'
 });
 
+// Computed
+const isAdmin = computed(() => auth.isAdmin);
+const isAuthenticated = computed(() => auth.isAuthenticated);
+const reservation = computed(() => reservationStore.currentReservation);
+const rooms = computed(() => roomStore.rooms);
+
+const isOwner = computed(() => {
+  if (!auth.user || !reservation.value) return false;
+  return auth.user.id === reservation.value.user?.id;
+});
+
+const canEdit = computed(() => {
+  if (!reservation.value) return false;
+  return isAdmin.value || (isOwner.value && reservation.value.status === 'PENDING');
+});
+
+const canCancel = computed(() => {
+  if (!reservation.value) return false;
+  return isAdmin.value || (isOwner.value && reservation.value.status === 'CONFIRMED');
+});
+
+// Carregar dados da reserva
+const fetchReservation = async () => {
+  loading.value = true;
+  try {
+    const id = route.params.id;
+    
+    // Carregar detalhes da reserva
+    await reservationStore.fetchReservation(id);
+    
+    // Carregar salas para o formulário se ainda não foram carregadas
+    if (rooms.value.length === 0) {
+      await roomStore.fetchRooms(1, 100);
+    }
+    
+    if (!reservation.value) {
+      toast.add({ severity: 'error', summary: 'Erro', detail: 'Reserva não encontrada', life: 3000 });
+      router.push('/reservations');
+    }
+  } catch (error) {
+    console.error('Erro ao carregar detalhes da reserva:', error);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar os detalhes da reserva', life: 3000 });
+    router.push('/reservations');
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Abrir diálogo de edição
 // Check if reservation can be cancelled
 const canCancelReservation = computed(() => {
   if (!reservation.value) return false;

@@ -66,259 +66,105 @@ const loadPendingReservations = async () => {
     // Implement API call to get pending reservations with pagination
     // const response = await api.getPendingReservations(lazyParams.value);
     // pendingReservations.value = response.data;
-    // totalRecords.value = response.total;
-    
-    // Mock data for now
-    setTimeout(() => {
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const nextWeek = new Date(today);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      
-      pendingReservations.value = [
-        {
-          id: 3,
-          title: 'Palestra: Inteligência Artificial',
-          description: 'Palestra sobre avanços em IA e suas aplicações',
-          start_time: tomorrow.toISOString(),
-          end_time: new Date(tomorrow.getTime() + 3 * 60 * 60 * 1000).toISOString(),
-          room_id: 3,
-          room: 'Auditório',
-          user: 'Roberto Mendes',
-          user_id: 3,
-          user_email: 'roberto.mendes@ifam.edu.br',
-          status: 'PENDING',
-          created_at: today.toISOString()
-        },
-        {
-          id: 4,
-          title: 'Reunião de Coordenação',
-          description: 'Reunião mensal de coordenação de cursos',
-          start_time: nextWeek.toISOString(),
-          end_time: new Date(nextWeek.getTime() + 1.5 * 60 * 60 * 1000).toISOString(),
-          room_id: 4,
-          room: 'Sala de Reuniões',
-          user: 'Maria Santos',
-          user_id: 4,
-          user_email: 'maria.santos@ifam.edu.br',
-          status: 'PENDING',
-          created_at: today.toISOString()
-        },
-        {
-          id: 6,
-          title: 'Defesa de TCC',
-          description: 'Defesa de Trabalho de Conclusão de Curso do aluno José Silva',
-          start_time: nextWeek.toISOString(),
-          end_time: new Date(nextWeek.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          room_id: 3,
-          room: 'Auditório',
-          user: 'Ana Oliveira',
-          user_id: 6,
-          user_email: 'ana.oliveira@ifam.edu.br',
-          status: 'PENDING',
-          created_at: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 7,
-          title: 'Aula de Física',
-          description: 'Aula de Física Mecânica para turma de Engenharia',
-          start_time: tomorrow.toISOString(),
-          end_time: new Date(tomorrow.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          room_id: 5,
-          room: 'Sala 102',
-          user: 'Paulo Ferreira',
-          user_id: 7,
-          user_email: 'paulo.ferreira@ifam.edu.br',
-          status: 'PENDING',
-          created_at: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 8,
-          title: 'Workshop de Programação',
-          description: 'Workshop de Python para iniciantes',
-          start_time: nextWeek.toISOString(),
-          end_time: new Date(nextWeek.getTime() + 4 * 60 * 60 * 1000).toISOString(),
-          room_id: 2,
-          room: 'Laboratório de Informática',
-          user: 'Carla Mendes',
-          user_id: 8,
-          user_email: 'carla.mendes@ifam.edu.br',
-          status: 'PENDING',
-          created_at: today.toISOString()
-        }
-      ];
-      
-      totalRecords.value = 5;
-      loading.value = false;
-    }, 500);
   } catch (error) {
-    console.error('Error loading pending reservations:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erro',
-      detail: 'Não foi possível carregar as reservas pendentes',
-      life: 3000
-    });
-    loading.value = false;
+    console.error('Erro ao carregar reservas pendentes:', error);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar as reservas pendentes', life: 3000 });
   }
 };
 
-// Handle page change
+// Manipulação de eventos da tabela
 const onPage = (event) => {
   lazyParams.value.first = event.first;
   lazyParams.value.rows = event.rows;
-  lazyParams.value.page = event.page + 1;
   loadPendingReservations();
 };
 
-// Handle sort
 const onSort = (event) => {
   lazyParams.value.sortField = event.sortField;
   lazyParams.value.sortOrder = event.sortOrder;
   loadPendingReservations();
 };
 
-// Handle filter
-const onFilter = () => {
-  lazyParams.value.first = 0;
-  lazyParams.value.page = 1;
-  loadPendingReservations();
-};
-
-// Open approval dialog
+// Abrir diálogos
 const openApproveDialog = (reservation) => {
   selectedReservation.value = reservation;
   approveDialog.value = true;
 };
 
-// Open rejection dialog
 const openRejectDialog = (reservation) => {
   selectedReservation.value = reservation;
   rejectionReason.value = '';
   rejectDialog.value = true;
 };
 
-// Open details dialog
-const openDetailsDialog = (reservation) => {
-  selectedReservation.value = reservation;
-  detailsDialog.value = true;
-};
-
-// Approve reservation
+// Aprovar reserva
 const approveReservation = async () => {
   try {
-    // Implement API call to approve reservation
-    // await api.updateReservation(selectedReservation.value.id, { status: 'CONFIRMED' });
+    if (!selectedReservation.value?.id) return;
     
-    // Update local data
-    pendingReservations.value = pendingReservations.value.filter(r => r.id !== selectedReservation.value.id);
-    totalRecords.value--;
+    // Aprovar a reserva na API
+    await reservationStore.approveReservation(selectedReservation.value.id);
     
     approveDialog.value = false;
+    selectedReservation.value = null;
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Reserva aprovada', life: 3000 });
     
-    toast.add({
-      severity: 'success',
-      summary: 'Sucesso',
-      detail: 'Reserva aprovada com sucesso',
-      life: 3000
-    });
+    // Recarregar para atualizar a lista
+    loadPendingReservations();
   } catch (error) {
-    console.error('Error approving reservation:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erro',
-      detail: 'Não foi possível aprovar a reserva',
-      life: 3000
-    });
+    console.error('Erro ao aprovar reserva:', error);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível aprovar a reserva', life: 3000 });
   }
 };
 
-// Reject reservation
+// Rejeitar reserva
 const rejectReservation = async () => {
-  if (!rejectionReason.value.trim()) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Atenção',
-      detail: 'Por favor, forneça um motivo para a rejeição',
-      life: 3000
-    });
-    return;
-  }
-  
   try {
-    // Implement API call to reject reservation
-    // await api.updateReservation(selectedReservation.value.id, { 
-    //   status: 'CANCELLED',
-    //   rejection_reason: rejectionReason.value
-    // });
+    if (!selectedReservation.value?.id) return;
     
-    // Update local data
-    pendingReservations.value = pendingReservations.value.filter(r => r.id !== selectedReservation.value.id);
-    totalRecords.value--;
+    if (!rejectionReason.value.trim()) {
+      toast.add({ severity: 'warn', summary: 'Atenção', detail: 'Informe o motivo da rejeição', life: 3000 });
+      return;
+    }
+    
+    // Rejeitar a reserva na API
+    await reservationStore.rejectReservation(selectedReservation.value.id, rejectionReason.value);
     
     rejectDialog.value = false;
+    selectedReservation.value = null;
     rejectionReason.value = '';
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Reserva rejeitada', life: 3000 });
     
-    toast.add({
-      severity: 'success',
-      summary: 'Sucesso',
-      detail: 'Reserva rejeitada com sucesso',
-      life: 3000
-    });
+    // Recarregar para atualizar a lista
+    loadPendingReservations();
   } catch (error) {
-    console.error('Error rejecting reservation:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erro',
-      detail: 'Não foi possível rejeitar a reserva',
-      life: 3000
-    });
+    console.error('Erro ao rejeitar reserva:', error);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível rejeitar a reserva', life: 3000 });
   }
 };
 
-// View reservation details
-const viewReservation = (id) => {
-  router.push(`/reservations/${id}`);
+// Fechar diálogos
+const hideDialog = () => {
+  approveDialog.value = false;
+  rejectDialog.value = false;
+  selectedReservation.value = null;
+  rejectionReason.value = '';
 };
 
-// View room details
-const viewRoom = (id) => {
-  router.push(`/rooms/${id}`);
-};
-
-// Format date
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR', {
+// Formatação
+const formatDate = (value) => {
+  return new Date(value).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  }).format(date);
+  });
 };
 
-// Format relative time (e.g., "2 days ago")
-const formatRelativeTime = (dateString) => {
-  if (!dateString) return '';
-  
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-  
-  if (diffDays > 0) {
-    return `${diffDays} dia${diffDays > 1 ? 's' : ''} atrás`;
-  } else if (diffHours > 0) {
-    return `${diffHours} hora${diffHours > 1 ? 's' : ''} atrás`;
-  } else if (diffMins > 0) {
-    return `${diffMins} minuto${diffMins > 1 ? 's' : ''} atrás`;
-  } else {
+// Navegação
+const viewReservationDetails = (reservation) => {
+  router.push(`/reservations/${reservation.id}`);
     return 'Agora mesmo';
   }
 };

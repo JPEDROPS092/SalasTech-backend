@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'nuxt/app';
+import { useReservationStore } from '~/stores/reservation';
 import { useToast } from 'primevue/usetoast';
-import { useRouter } from 'vue-router';
 import { useAuth } from '~/composables/use-auth';
+
+// Definir metadados da página
+definePageMeta({
+  middleware: ['auth'],
+  public: false
+});
 
 const auth = useAuth();
 const router = useRouter();
@@ -44,185 +51,83 @@ const selectedReservation = ref(null);
 const loadMyReservations = async () => {
   if (!auth.isAuthenticated) {
     toast.add({
-      severity: 'warn',
-      summary: 'Atenção',
-      detail: 'Você precisa estar autenticado para ver suas reservas',
-      life: 3000
-    });
-    router.push('/login');
-    return;
-  }
-
   try {
-    loading.value = true;
+    if (!auth.user?.id) {
+      toast.add({ severity: 'error', summary: 'Erro', detail: 'Usuário não identificado', life: 3000 });
+      return;
+    }
     
-    // Implement API call to get user's reservations with pagination
-    // const response = await api.getUserReservations(auth.user.id, lazyParams.value);
-    // myReservations.value = response.data;
-    // totalRecords.value = response.total;
+    // Converter parâmetros de lazy loading para formato da API
+    const page = Math.floor(lazyParams.value.first / lazyParams.value.rows) + 1;
+    const limit = lazyParams.value.rows;
+    const sortField = lazyParams.value.sortField;
+    const sortOrder = lazyParams.value.sortOrder;
     
-    // Mock data for now
-    setTimeout(() => {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const nextWeek = new Date(today);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      
-      myReservations.value = [
-        {
-          id: 1,
-          title: 'Aula de Matemática',
-          description: 'Aula de Cálculo I para turma de Engenharia',
-          start_time: today.toISOString(),
-          end_time: new Date(today.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          room_id: 1,
-          room: 'Sala 101',
-          status: 'CONFIRMED'
-        },
-        {
-          id: 3,
-          title: 'Palestra: Inteligência Artificial',
-          description: 'Palestra sobre avanços em IA e suas aplicações',
-          start_time: tomorrow.toISOString(),
-          end_time: new Date(tomorrow.getTime() + 3 * 60 * 60 * 1000).toISOString(),
-          room_id: 3,
-          room: 'Auditório',
-          status: 'PENDING'
-        },
-        {
-          id: 4,
-          title: 'Reunião de Coordenação',
-          description: 'Reunião mensal de coordenação de cursos',
-          start_time: nextWeek.toISOString(),
-          end_time: new Date(nextWeek.getTime() + 1.5 * 60 * 60 * 1000).toISOString(),
-          room_id: 4,
-          room: 'Sala de Reuniões',
-          status: 'PENDING'
-        },
-        {
-          id: 5,
-          title: 'Monitoria de Matemática',
-          description: 'Monitoria para alunos com dificuldade em Cálculo',
-          start_time: yesterday.toISOString(),
-          end_time: new Date(yesterday.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          room_id: 1,
-          room: 'Sala 101',
-          status: 'CANCELLED'
-        }
-      ];
-      
-      totalRecords.value = 4;
-      loading.value = false;
-    }, 500);
+    // Carregar reservas do usuário da API
+    await reservationStore.fetchUserReservations(auth.user.id, page, limit, sortField, sortOrder);
   } catch (error) {
-    console.error('Error loading reservations:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erro',
-      detail: 'Não foi possível carregar suas reservas',
-      life: 3000
-    });
-    loading.value = false;
+    console.error('Erro ao carregar minhas reservas:', error);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar suas reservas', life: 3000 });
   }
 };
 
-// Handle page change
+// Manipulação de eventos da tabela
 const onPage = (event) => {
   lazyParams.value.first = event.first;
   lazyParams.value.rows = event.rows;
-  lazyParams.value.page = event.page + 1;
   loadMyReservations();
 };
 
-// Handle sort
 const onSort = (event) => {
   lazyParams.value.sortField = event.sortField;
   lazyParams.value.sortOrder = event.sortOrder;
   loadMyReservations();
 };
 
-// Handle filter
-const onFilter = () => {
-  lazyParams.value.first = 0;
-  lazyParams.value.page = 1;
-  loadMyReservations();
-};
-
-// View reservation details
-const viewReservation = (reservation) => {
-  router.push(`/reservations/${reservation.id}`);
-};
-
-// View room details
-const viewRoom = (id) => {
-  router.push(`/rooms/${id}`);
-};
-
-// Open reservation details dialog
-const openDetailsDialog = (reservation) => {
+// Abrir diálogo de cancelamento
+const openCancelDialog = (reservation) => {
   selectedReservation.value = reservation;
-  reservationDetailsDialog.value = true;
+  cancelDialog.value = true;
 };
 
-// Confirm cancel reservation
-const confirmCancelReservation = (reservation) => {
-  selectedReservation.value = reservation;
-  cancelReservationDialog.value = true;
-};
-
-// Cancel reservation
+// Cancelar reserva
 const cancelReservation = async () => {
   try {
-    // Implement API call to cancel reservation
-    // await api.updateReservation(selectedReservation.value.id, { status: 'CANCELLED' });
+    if (!selectedReservation.value?.id) return;
     
-    // Update local data
-    const index = myReservations.value.findIndex(r => r.id === selectedReservation.value.id);
-    if (index !== -1) {
-      myReservations.value[index] = { 
-        ...myReservations.value[index], 
-        status: 'CANCELLED' 
-      };
-    }
+    // Cancelar a reserva na API
+    await reservationStore.cancelReservation(selectedReservation.value.id);
     
-    cancelReservationDialog.value = false;
+    cancelDialog.value = false;
     selectedReservation.value = null;
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Reserva cancelada', life: 3000 });
     
-    toast.add({
-      severity: 'success',
-      summary: 'Sucesso',
-      detail: 'Reserva cancelada com sucesso',
-      life: 3000
-    });
+    // Recarregar para atualizar a lista
+    loadMyReservations();
   } catch (error) {
-    console.error('Error cancelling reservation:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erro',
-      detail: 'Não foi possível cancelar a reserva',
-      life: 3000
-    });
+    console.error('Erro ao cancelar reserva:', error);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível cancelar a reserva', life: 3000 });
   }
 };
 
-// Format date
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR', {
+// Fechar diálogo
+const hideDialog = () => {
+  cancelDialog.value = false;
+  selectedReservation.value = null;
+};
+
+// Formatação
+const formatDate = (value) => {
+  return new Date(value).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  }).format(date);
+  });
 };
 
-// Get status severity
-const getStatusSeverity = (status) => {
+const getSeverity = (status) => {
   switch (status) {
     case 'CONFIRMED':
       return 'success';
@@ -231,11 +136,10 @@ const getStatusSeverity = (status) => {
     case 'CANCELLED':
       return 'danger';
     default:
-      return 'info';
+      return null;
   }
 };
 
-// Get status label
 const getStatusLabel = (status) => {
   switch (status) {
     case 'CONFIRMED':
@@ -249,20 +153,17 @@ const getStatusLabel = (status) => {
   }
 };
 
-// Filter reservations by status for tabs
-const getFilteredReservations = (status = null) => {
-  if (!status) return myReservations.value;
-  return myReservations.value.filter(r => r.status === status);
+// Navegação
+const viewReservationDetails = (reservation) => {
+  router.push(`/reservations/${reservation.id}`);
 };
 
-// Check if reservation can be cancelled
-const canCancelReservation = (reservation) => {
-  return reservation.status !== 'CANCELLED';
+const goToRoom = (roomId) => {
+  router.push(`/rooms/${roomId}`);
 };
 
-// Create new reservation
 const createNewReservation = () => {
-  router.push('/rooms/search');
+  router.push('/reservations');
 };
 
 // Initialize component

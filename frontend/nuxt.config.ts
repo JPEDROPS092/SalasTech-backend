@@ -12,6 +12,9 @@ export default defineNuxtConfig({
                 options: {
                     darkModeSelector: ".p-dark",
                 },
+                components: {
+                    exclude: [] // Inclui Chart e Editor que são excluídos por padrão
+                },
             },
             ripple: true,
         },
