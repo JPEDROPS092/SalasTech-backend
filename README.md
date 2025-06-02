@@ -102,8 +102,8 @@ O projeto segue uma arquitetura em camadas:
 
    ```bash
    # Clone o repositório
-   git clone https://github.com/seuusuario/gerenciamento-salas-ifam.git
-   cd gerenciamento-salas-ifam
+   git clone https://github.com/seuusuario/gerenciamento-salas-ifam.git](https://github.com/JPEDROPS092/gerenciamento-salas
+   cd gerenciamento-salas
 
    # Crie e ative o ambiente virtual
    python -m venv venv
