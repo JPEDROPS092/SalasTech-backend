@@ -99,36 +99,37 @@ O projeto segue uma arquitetura em camadas:
 ### Fluxo de Desenvolvimento
 
 1. **Configuração do Ambiente**
+
    ```bash
    # Clone o repositório
    git clone https://github.com/seuusuario/gerenciamento-salas-ifam.git
    cd gerenciamento-salas-ifam
-   
+
    # Crie e ative o ambiente virtual
    python -m venv venv
    source venv/bin/activate  # No Windows: venv\Scripts\activate
-   
+
    # Instale as dependências
    pip install -r requirements.txt
-   
+
    # Configure as variáveis de ambiente
    cp .env.example .env
    # Edite o arquivo .env com suas configurações
    ```
-
 2. **Inicialização do Banco de Dados**
+
    ```bash
    # Configure e popule o banco de dados
    ./dev.sh setup
    ```
-
 3. **Desenvolvimento**
+
    ```bash
    # Inicie o servidor de desenvolvimento
    ./dev.sh run
    ```
-
 4. **Testes**
+
    ```bash
    # Execute os testes
    ./dev.sh test
@@ -159,12 +160,13 @@ O projeto utiliza o Alembic para gerenciar migrações de banco de dados, permit
 O sistema suporta dois tipos de bancos de dados:
 
 1. **SQLite** (padrão para desenvolvimento)
+
    ```env
    DB_TYPE=sqlite
    SQLITE_PATH=db.sqlite
    ```
-
 2. **MySQL** (recomendado para produção)
+
    ```env
    DB_TYPE=mysql
    DB_HOST=localhost
