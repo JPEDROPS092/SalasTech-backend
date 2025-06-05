@@ -36,7 +36,7 @@
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/seuusuario/gerenciamento-salas-ifam.git
+git clone https://github.com/jpedrops092/gerenciamento-salas-ifam.git
 cd gerenciamento-salas-ifam
 ```
 
