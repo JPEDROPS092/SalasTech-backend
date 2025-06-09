@@ -1,6 +1,6 @@
-<div align="center">
+# 🏫 SalsTech - Sistema de Gerenciamento de Salas IFAM (Backend)
 
-# 🏫 SalasTech-Sistema de Gerenciamento de Salas
+<div align="center">
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Code Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
@@ -8,7 +8,7 @@
 ![FastAPI Version](https://img.shields.io/badge/fastapi-0.95%2B-teal)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-*Uma solução completa para gerenciamento de reservas de salas, agendamentos e alocação de recursos.*
+*Sistema de gerenciamento de reservas de salas, agendamentos e recursos.*
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="40" height="40"/>
@@ -18,261 +18,262 @@
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original-wordmark.svg" alt="shell" width="40" height="40" />
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlalchemy/sqlalchemy-original-wordmark.svg" alt="alembic" width="40" height="40"/>
 
-</p>
-
-</div>
-
 ---
 
-## 🚀 Quick Start
+## 📋 Índice
 
-### Prerequisites
+- [Características](#-características)
+- [Pré-requisitos](#-pré-requisitos)
+- [Instalação](#-instalação)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [API Documentation](#-api-documentation)
+- [Desenvolvimento](#-desenvolvimento)
+- [Testes](#-testes)
+- [CLI Admin](#-cli-admin)
+- [Segurança](#-segurança)
+- [Database](#-database)
+- [Scripts de Manutenção](#-scripts-de-manutenção)
+- [Licença](#-licença)
 
-- Python 3.9 or higher
-- MySQL 8.0 or higher (optional, SQLite is also supported)
-- Node.js and npm (for frontend assets)
-- Docker and Docker Compose (for containerized deployment)
+## ✨ Características
 
-### Installation
+- **Autenticação Robusta**
 
-1. **Clone o repositorio**
+  - Sistema completo de login/registro
+  - JWT Tokens
+  - Proteção CSRF
+  - Rate Limiting
+  - Refresh Tokens
+- **Gerenciamento de Recursos**
 
-```bash
-git clone https://github.com/jpedrops092/SalasTech-backend.git
-cd SalasTech-backend
-```
+  - Salas e Departamentos
+  - Reservas e Agendamentos
+  - Recursos por Sala
+  - Status e Disponibilidade
+- **Controle de Acesso**
 
-2. **Configuração de ambiente**
+  - Múltiplos níveis de usuário
+  - Permissões por departamento
+  - Aprovação de reservas
+  - Auditoria de mudanças
+- **Automações**
 
-```bash
-python -m venv venv
-source venv/bin/activate  # No Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
+  - Aprovação automática
+  - Notificações
+  - Limpeza de dados
+  - Backups automáticos
 
-3. **Configurações de Váriaveis de ambiente**
+## 🚀 Pré-requisitos
 
-```bash
-cp .env.example .env
-# Edit .env file com suas configurações de banco de dados 
-```
+- Python 3.9+
+- Banco de dados:
+  - SQLite (desenvolvimento)
+  - MySQL 8.0+ (produção)
+- Sistema de virtualenv
 
-4. **Inicie o database **
+## 📥 Instalação
 
-```bash
-./dev.sh setup    # Configura o banco de dados  e popula com dados 
-```
-
-5. **Run **
-
-```bash
-./dev.sh run      # Inicia o servidor de desenvolvimento 
-# or
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-6. **Acesse o servidor backend **
-
-Visit `http://localhost:8000` in your browser.
-
----
-
-## 📚 Documentation
-
-- **API Documentation**: Disponível em `/docs` (Swagger UI) e `/redoc` (ReDoc).
-- **Guia de configuração**:[Pipeline de Desenvolvimento](#pipeline-de-desenvolvimento)
-
----
-
-## 🛠️ Pipeline de Desenvolvimento
-
-### Arquitetura do Projeto
-
-O projeto segue uma arquitetura em camadas:
-
-- **Controllers**: Gerenciam as requisições HTTP e respostas
-  - `controllers/api`: Endpoints da API REST
-  - `controllers/pages`: Rotas para renderização de páginas
-- **Models**: Definições de modelos de dados e esquemas
-- **Repositories**: Camada de acesso a dados
-- **Services**: Lógica de negócios
-- **Core**: Configurações, middlewares e utilitários
-
-### Fluxo de Desenvolvimento
-
-1. **Configuração do Ambiente**
+1. **Clone o repositório**
 
    ```bash
-   # Clone o repositório
-   git clone https://github.com/JPEDROPS092/gerenciamento-salas
-   cd gerenciamento-salas
-
-   # Crie e ative o ambiente virtual
-   python -m venv venv
-   source venv/bin/activate  # No Windows: venv\Scripts\activate
-
-   # Instale as dependências
-   pip install -r requirements.txt
-
-   # Configure as variáveis de ambiente
-   cp .env.example .env
-   # Edite o arquivo .env com suas configurações
+   git clone https://github.com/jpedrops092/SalasTech-backend.git
+   cd SalasTech-backend
    ```
-2. **Inicialização do Banco de Dados**
+2. **Configure o ambiente virtual**
 
    ```bash
-   # Configure e popule o banco de dados
+   # Criar e ativar ambiente virtual
+   python -m venv venv
+   source venv/bin/activate  # No Windows: venv\\Scripts\\activate
+
+   # Atualizar pip
+   pip install --upgrade pip
+   ```
+3. **Instalar dependências**
+
+   O projeto usa `pyproject.toml` para gerenciar dependências. Você tem várias opções de instalação:
+
+   ```bash
+   # Instalação básica (ambiente de produção)
+   pip install -e .
+
+   # Instalação com dependências de teste
+   pip install -e ".[test]"
+   ```
+
+   Dependências incluídas:
+
+   - **Core**: FastAPI, SQLAlchemy, Pydantic, etc.
+   - **Segurança**: JWT, CSRF, bcrypt, passlib
+   - **Database**: MySQL, PostgreSQL, SQLite
+   - **CLI**: Typer, Rich
+   - **Testes**: pytest, coverage, httpx
+4. **Variáveis de ambiente**
+
+   ```bash
+   cp .env.example .env
+   # Configure as variáveis no arquivo .env
+   ```
+5. **Inicialize o banco de dados**
+
+   ```bash
    ./dev.sh setup
    ```
-3. **Desenvolvimento**
+6. **Execute o servidor**
 
    ```bash
-   # Inicie o servidor de desenvolvimento
    ./dev.sh run
-   ```
-4. **Testes**
-
-   ```bash
-   # Execute os testes
-   ./dev.sh test
+   # ou
+   uvicorn src.SalasTech.app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
-### Usando o Script `dev.sh`
+## 🏗 Estrutura do Projeto
 
-O script `dev.sh` simplifica tarefas comuns de desenvolvimento:
-
-```bash
-./dev.sh setup       # Configura o ambiente (cria tabelas e popula o banco)
-./dev.sh run         # Inicia o servidor de desenvolvimento
-./dev.sh populate    # Popula o banco de dados com dados de teste
-./dev.sh reset       # Recria as tabelas e popula o banco de dados
-./dev.sh migrations  # Gerencia migrações do banco de dados
-./dev.sh test        # Executa os testes
-./dev.sh clean       # Limpa arquivos temporários e caches
+```
+src/SalasTech/
+├── app/
+│   ├── controllers/          # Endpoints e rotas
+│   │   ├── api/             # API REST
+│   │   └── pages/           # Renderização de páginas
+│   ├── models/              # Modelos e schemas
+│   ├── services/            # Lógica de negócios
+│   ├── repos/               # Acesso a dados
+│   ├── core/                # Configurações core
+│   │   ├── security/        # Autenticação e proteção
+│   │   └── middlewares/     # Middlewares
+│   └── exceptions/          # Tratamento de erros
+├── cli/                     # Interface de linha de comando
+└── tests/                   # Testes automatizados
+    ├── unit/           
+    ├── integration/    
+    └── e2e/            
 ```
 
----
+## 📚 API Documentation
 
-## 📂 Sistema de Migração do Banco de Dados
+- **Swagger UI**: `/docs`
+- **ReDoc**: `/redoc`
+- **OpenAPI**: `/openapi.json`
 
-O projeto utiliza o Alembic para gerenciar migrações de banco de dados, permitindo controle de versão do esquema do banco de dados.
+### Principais Endpoints
 
-### Configuração do Banco de Dados
+- **Autenticação**
 
-O sistema suporta dois tipos de bancos de dados:
+  - `POST /api/auth/register`
+  - `POST /api/auth/login`
+  - `GET /api/auth/logout`
+  - `POST /api/auth/password/reset`
+- **Salas**
 
-1. **SQLite** (padrão para desenvolvimento)
+  - `GET /api/rooms`
+  - `POST /api/rooms`
+  - `GET /api/rooms/{id}`
+  - `GET /api/rooms/{id}/availability`
+- **Reservas**
 
-   ```env
-   DB_TYPE=sqlite
-   SQLITE_PATH=db.sqlite
-   ```
-2. **MySQL** (recomendado para produção)
+  - `GET /api/reservations`
+  - `POST /api/reservations`
+  - `GET /api/reservations/{id}`
+  - `POST /api/reservations/{id}/approve`
 
-   ```env
-   DB_TYPE=mysql
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USER=root
-   DB_PASSWORD=sua_senha
-   DB_NAME=room_management
-   ```
+## 🔧 Desenvolvimento
 
-### Gerenciamento de Migrações
+### Script dev.sh
 
-O projeto utiliza Alembic para gerenciar migrações de banco de dados. O script `migration_manager.sh` facilita o uso do Alembic:
-
-```bash
-# Gerar uma nova migração baseada nas alterações nos modelos
-./dev.sh migrations generate
-
-# Aplicar migrações pendentes
-./dev.sh migrations apply
-
-# Reverter a última migração
-./dev.sh migrations revert
-
-# Gerar e aplicar migrações em um único comando
-./dev.sh migrations all
-```
-
-### Fluxo de Trabalho com Migrações
-
-1. **Modificar Modelos**: Atualize os modelos em `app/models/`
-2. **Gerar Migração**: Execute `./dev.sh migrations generate`
-3. **Revisar Migração**: Verifique o arquivo gerado em `app/migrations/versions/`
-4. **Aplicar Migração**: Execute `./dev.sh migrations apply`
-
-### Inicialização Automática do Banco de Dados
-
-O sistema pode criar automaticamente o banco de dados e tabelas na primeira execução:
-
-```python
-# Em app/db_init.py
-from app.core.db_context import auto_create_db
-auto_create_db()
-```
-
----
-
-## 🎯 CLI Admin
-
-O SalsTech inclui uma poderosa interface de linha de comando para administração do sistema. Para instalar o CLI:
+O script `dev.sh` facilita tarefas comuns:
 
 ```bash
-# No diretório do projeto, com o ambiente virtual ativado
+./dev.sh setup       # Configura o ambiente
+./dev.sh run         # Inicia o servidor
+./dev.sh populate    # Popula dados de teste
+./dev.sh migrations  # Gerencia migrações
+./dev.sh test        # Executa testes
+./dev.sh clean       # Limpa temporários
+```
+
+## 🧪 Testes
+
+O projeto utiliza pytest para testes:
+
+```bash
+# Executar todos os testes
+pytest
+
+# Testes específicos
+pytest tests/unit
+pytest tests/integration
+pytest tests/e2e
+
+# Com cobertura
+pytest --cov=src
+```
+
+## 💻 CLI Admin
+
+Interface de linha de comando para administração:
+
+```bash
+# Instalação
 pip install -e .
+
+# Uso
+SalasTech --help
+SalasTech user list
+SalasTech room create
+SalasTech reservation approve 1
 ```
 
-### Comandos Principais
+## 🔒 Segurança
 
-O CLI está disponível através do comando `salstech`. Alguns exemplos de uso:
+- JWT para autenticação
+- CSRF Protection
+- Rate Limiting
+- Bcrypt para senhas
+- CORS configurável
+- Logs de segurança
+
+## 🗄 Database
+
+### Configuração
+
+```env
+# SQLite (Dev)
+DB_TYPE=sqlite
+SQLITE_PATH=db.sqlite
+
+# MySQL (Prod)
+DB_TYPE=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=SalasTech
+```
+
+### Migrações (Alembic)
 
 ```bash
-# Ver todos os comandos disponíveis
-salstech --help
-
-# Gerenciamento de Usuários
-salstech user list              # Listar usuários
-salstech user create --admin    # Criar usuário administrador
-salstech user get 1            # Ver detalhes do usuário
-
-# Gerenciamento de Departamentos
-salstech dept list             # Listar departamentos
-salstech dept create           # Criar novo departamento
-salstech dept update 1         # Atualizar departamento
-
-# Gerenciamento de Salas
-salstech room list             # Listar salas
-salstech room create           # Criar nova sala
-salstech room update-status 1 MAINTENANCE  # Atualizar status
-
-# Gerenciamento de Reservas
-salstech reservation list --status PENDING  # Listar reservas pendentes
-salstech reservation create --room-id 1 --user-id 1  # Criar reserva
-salstech reservation approve 1 --admin-id 2  # Aprovar reserva
+./dev.sh migrations generate  # Nova migração
+./dev.sh migrations apply    # Aplicar migrações
+./dev.sh migrations revert   # Reverter última
 ```
 
-Para documentação completa do CLI, consulte [CLI.md](CLI.md).
+## 🛠 Scripts de Manutenção
 
----
+- `scripts/backup_database.py`: Backup automático
+- `scripts/optimize_database.py`: Otimização
+- `scripts/monitor_database.py`: Monitoramento
+- `scripts/setup_backup_cron.sh`: Configuração de cron
 
-## 🤝 Contributing
+## 📄 Licença
 
-Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ---
 
 <div align="center">
 
-**Developed with ❤️ for IFAM**
+**Desenvolvido com ❤️ para o IFAM**
 
-[Report a Bug](https://github.com/seuusuario/gerenciamento-salas-ifam/issues) · [Request a Feature](https://github.com/seuusuario/gerenciamento-salas-ifam/issues)
+[Reportar Bug](https://github.com/jpedrops092/SalasTech-backend/issues) ·
+[Solicitar Feature](https://github.com/jpedrops092/SalasTech-backend/issues)
 
 </div>

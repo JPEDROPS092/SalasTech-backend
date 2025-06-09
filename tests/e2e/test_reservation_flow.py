@@ -1,12 +1,12 @@
 """
-End-to-end tests for reservation management flows.
+End-to-end tests for reservation flows.
 """
 
+from datetime import datetime, timedelta, timezone
 import pytest
-from datetime import datetime, timedelta
+import uuid
 from fastapi.testclient import TestClient
-from app.models.enums import ReservationStatus
-from app.core.security import csrf
+from SalasTech.app.models.enums import ReservationStatus
 
 @pytest.mark.e2e
 class TestReservationFlow:

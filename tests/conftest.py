@@ -14,11 +14,11 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # Import the application modules
-from app.models.db import Base
-from app.core.config import Config
-from app.main import app as fastapi_app
-from app.core.security import session, csrf
-from app.core.security.rate_limiter import RateLimiter
+from SalasTech.app.models.db import Base
+from SalasTech.app.core.config import Config
+from SalasTech.app.main import app as fastapi_app
+from SalasTech.app.core.security import session, csrf
+from SalasTech.app.core.security.rate_limiter import RateLimiter
 
 
 @pytest.fixture(scope="session")

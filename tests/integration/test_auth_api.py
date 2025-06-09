@@ -4,7 +4,9 @@ Integration tests for authentication API endpoints.
 
 import pytest
 from fastapi.testclient import TestClient
-from app.core.security import csrf
+from httpx import AsyncClient
+from SalasTech.app.core.security import csrf
+from SalasTech.app.models.enums import UserRole
 
 @pytest.mark.integration
 class TestAuthAPI:

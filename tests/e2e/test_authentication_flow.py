@@ -5,7 +5,7 @@ End-to-end tests for authentication flows.
 import pytest
 import uuid
 from fastapi.testclient import TestClient
-from app.core.security import csrf
+from SalasTech.app.core.security import csrf
 
 @pytest.mark.e2e
 class TestAuthenticationFlow:
