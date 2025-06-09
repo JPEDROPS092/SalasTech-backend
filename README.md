@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏫 Sistema de Gerenciamento de Salas IFAM
+# 🏫 Sistema de Gerenciamento de Salas SalasTech
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Code Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
@@ -33,43 +33,43 @@
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone o repositorio**
 
 ```bash
-git clone https://github.com/jpedrops092/gerenciamento-salas-ifam.git
+git clone https://github.com/jpedrops092/SalasTech-backend.git
 cd gerenciamento-salas-ifam
 ```
 
-2. **Set up the environment**
+2. **Configuração de ambiente**
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # No Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. **Configure environment variables**
+3. **Configurações de Váriaveis de ambiente**
 
 ```bash
 cp .env.example .env
-# Edit .env file with your database settings
+# Edit .env file com suas configurações de banco de dados 
 ```
 
-4. **Initialize the database**
+4. **Inicie o database **
 
 ```bash
-./dev.sh setup    # Sets up the database and populates it with initial data
+./dev.sh setup    # Configura o banco de dados  e popula com dados 
 ```
 
-5. **Run the application**
+5. **Run **
 
 ```bash
-./dev.sh run      # Starts the development server
+./dev.sh run      # Inicia o servidor de desenvolvimento 
 # or
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-6. **Access the application**
+6. **Acesse o servidor backend **
 
 Visit `http://localhost:8000` in your browser.
 
@@ -77,9 +77,8 @@ Visit `http://localhost:8000` in your browser.
 
 ## 📚 Documentation
 
-- **API Documentation**: Available at `/docs` (Swagger UI) and `/redoc` (ReDoc).
-- **Setup Guide**: Refer to the [Pipeline de Desenvolvimento](#pipeline-de-desenvolvimento) section for detailed setup instructions.
-
+- **API Documentation**: Disponível em `/docs` (Swagger UI) e `/redoc` (ReDoc).
+- **Guia de configuração**:[Pipeline de Desenvolvimento](#pipeline-de-desenvolvimento) 
 ---
 
 ## 🛠️ Pipeline de Desenvolvimento
