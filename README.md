@@ -41,7 +41,7 @@
 
 ```bash
 git clone https://github.com/jpedrops092/SalasTech-backend.git
-cd gerenciamento-salas-ifam
+cd SalasTech-backend
 ```
 
 2. **Configuração de ambiente**
