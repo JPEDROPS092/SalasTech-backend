@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏫 SalasTech-Sistema de Gerenciamento de Salas 
+# 🏫 SalasTech-Sistema de Gerenciamento de Salas
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Code Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
@@ -17,9 +17,7 @@
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg" alt="shell" width="40" height="40"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original-wordmark.svg" alt="shell" width="40" height="40" />
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlalchemy/sqlalchemy-original-wordmark.svg" alt="alembic" width="40" height="40"/>
-          
-              
-          
+
 </p>
 
 </div>
@@ -82,7 +80,8 @@ Visit `http://localhost:8000` in your browser.
 ## 📚 Documentation
 
 - **API Documentation**: Disponível em `/docs` (Swagger UI) e `/redoc` (ReDoc).
-- **Guia de configuração**:[Pipeline de Desenvolvimento](#pipeline-de-desenvolvimento) 
+- **Guia de configuração**:[Pipeline de Desenvolvimento](#pipeline-de-desenvolvimento)
+
 ---
 
 ## 🛠️ Pipeline de Desenvolvimento
@@ -213,6 +212,48 @@ O sistema pode criar automaticamente o banco de dados e tabelas na primeira exec
 from app.core.db_context import auto_create_db
 auto_create_db()
 ```
+
+---
+
+## 🎯 CLI Admin
+
+O SalsTech inclui uma poderosa interface de linha de comando para administração do sistema. Para instalar o CLI:
+
+```bash
+# No diretório do projeto, com o ambiente virtual ativado
+pip install -e .
+```
+
+### Comandos Principais
+
+O CLI está disponível através do comando `salstech`. Alguns exemplos de uso:
+
+```bash
+# Ver todos os comandos disponíveis
+salstech --help
+
+# Gerenciamento de Usuários
+salstech user list              # Listar usuários
+salstech user create --admin    # Criar usuário administrador
+salstech user get 1            # Ver detalhes do usuário
+
+# Gerenciamento de Departamentos
+salstech dept list             # Listar departamentos
+salstech dept create           # Criar novo departamento
+salstech dept update 1         # Atualizar departamento
+
+# Gerenciamento de Salas
+salstech room list             # Listar salas
+salstech room create           # Criar nova sala
+salstech room update-status 1 MAINTENANCE  # Atualizar status
+
+# Gerenciamento de Reservas
+salstech reservation list --status PENDING  # Listar reservas pendentes
+salstech reservation create --room-id 1 --user-id 1  # Criar reserva
+salstech reservation approve 1 --admin-id 2  # Aprovar reserva
+```
+
+Para documentação completa do CLI, consulte [CLI.md](CLI.md).
 
 ---
 

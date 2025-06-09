@@ -1,0 +1,2 @@
+[console_scripts]
+salstech = salstech.cli.main:app
