@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏫 Sistema de Gerenciamento de Salas SalasTech
+# 🏫 SalasTech-Sistema de Gerenciamento de Salas 
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Code Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
