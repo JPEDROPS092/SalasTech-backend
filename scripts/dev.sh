@@ -32,8 +32,8 @@ help_message() {
 # Função para iniciar o servidor de desenvolvimento
 run_server() {
     echo -e "${BLUE}Iniciando servidor de desenvolvimento...${NC}"
-    cd "$(dirname "$0")"
-    python -m uvicorn src.SalasTech.app.main:app --reload --host 0.0.0.0 --port 8000
+    cd "$(dirname "$0")/.."
+    python -m uvicorn SalasTech.app.main:app --reload --host 0.0.0.0 --port 8000
 }
 
 # Função para configurar o ambiente
@@ -68,14 +68,6 @@ setup_environment() {
     
     # Popular o banco de dados
     echo -e "${BLUE}Populando o banco de dados...${NC}"
-    python populate_database.py
-    
-    echo -e "${GREEN}Ambiente configurado com sucesso!${NC}"
-    echo -e "${YELLOW}Criando tabelas no banco de dados...${NC}"
-    python -m app.core.db_context
-    
-    # Popula o banco de dados
-    echo -e "${YELLOW}Populando o banco de dados...${NC}"
     python populate_database.py
     
     echo -e "${GREEN}Ambiente configurado com sucesso!${NC}"

@@ -2,7 +2,7 @@
 
 ## 1. Introdução
 
-Este documento descreve o plano de testes para o Sistema de Gerenciamento de Salas do IFAM. O objetivo é garantir a qualidade do software através de uma estratégia abrangente de testes que cubra todos os componentes e funcionalidades do sistema.
+Este documento descreve o plano de testes para o Salas Tech. O objetivo é garantir a qualidade do software através de uma estratégia abrangente de testes que cubra todos os componentes e funcionalidades do sistema.
 
 ## 2. Escopo de Testes
 
@@ -101,14 +101,14 @@ Os testes de segurança verificarão:
 
 ## 6. Cronograma de Testes
 
-| Fase | Duração | Atividades |
-|------|---------|------------|
-| Planejamento | 1 semana | Definição de casos de teste, preparação de ambiente |
-| Implementação | 2 semanas | Desenvolvimento dos testes automatizados |
-| Execução | 1 semana | Execução de testes e registro de resultados |
-| Análise | 1 semana | Avaliação dos resultados e identificação de problemas |
-| Correção | 1-2 semanas | Correção de defeitos encontrados |
-| Reteste | 1 semana | Verificação das correções implementadas |
+| Fase            | Duração   | Atividades                                                |
+| --------------- | ----------- | --------------------------------------------------------- |
+| Planejamento    | 1 semana    | Definição de casos de teste, preparação de ambiente   |
+| Implementação | 2 semanas   | Desenvolvimento dos testes automatizados                  |
+| Execução      | 1 semana    | Execução de testes e registro de resultados             |
+| Análise        | 1 semana    | Avaliação dos resultados e identificação de problemas |
+| Correção      | 1-2 semanas | Correção de defeitos encontrados                        |
+| Reteste         | 1 semana    | Verificação das correções implementadas               |
 
 ## 7. Critérios de Aceitação
 
@@ -130,48 +130,48 @@ Os seguintes relatórios serão gerados durante o processo de teste:
 
 ### 9.1 Testes de Modelos
 
-| ID | Descrição | Pré-condições | Passos | Resultado Esperado |
-|----|-----------|---------------|--------|-------------------|
-| TM-01 | Criação de Departamento | Banco de dados vazio | 1. Criar objeto Departamento<br>2. Salvar no banco | Departamento criado com sucesso |
-| TM-02 | Criação de Usuário | Departamento existente | 1. Criar objeto Usuário<br>2. Associar a um departamento<br>3. Salvar no banco | Usuário criado com sucesso |
-| TM-03 | Criação de Sala | Departamento existente | 1. Criar objeto Sala<br>2. Associar a um departamento<br>3. Salvar no banco | Sala criada com sucesso |
-| TM-04 | Criação de Reserva | Sala e Usuário existentes | 1. Criar objeto Reserva<br>2. Associar a uma sala e usuário<br>3. Salvar no banco | Reserva criada com sucesso |
+| ID    | Descrição               | Pré-condições           | Passos                                                                                     | Resultado Esperado              |
+| ----- | ------------------------- | -------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------- |
+| TM-01 | Criação de Departamento | Banco de dados vazio       | 1. Criar objeto Departamento`<br>`2. Salvar no banco                                     | Departamento criado com sucesso |
+| TM-02 | Criação de Usuário     | Departamento existente     | 1. Criar objeto Usuário`<br>`2. Associar a um departamento`<br>`3. Salvar no banco    | Usuário criado com sucesso     |
+| TM-03 | Criação de Sala         | Departamento existente     | 1. Criar objeto Sala`<br>`2. Associar a um departamento`<br>`3. Salvar no banco        | Sala criada com sucesso         |
+| TM-04 | Criação de Reserva      | Sala e Usuário existentes | 1. Criar objeto Reserva`<br>`2. Associar a uma sala e usuário`<br>`3. Salvar no banco | Reserva criada com sucesso      |
 
 ### 9.2 Testes de Serviços
 
-| ID | Descrição | Pré-condições | Passos | Resultado Esperado |
-|----|-----------|---------------|--------|-------------------|
-| TS-01 | Listar Salas Disponíveis | Salas cadastradas | 1. Definir período de busca<br>2. Chamar serviço de busca | Lista de salas disponíveis retornada |
-| TS-02 | Criar Reserva | Sala disponível e usuário válido | 1. Preparar dados da reserva<br>2. Chamar serviço de criação | Reserva criada com status pendente |
-| TS-03 | Aprovar Reserva | Reserva pendente existente | 1. Identificar reserva<br>2. Chamar serviço de aprovação | Reserva com status alterado para confirmada |
-| TS-04 | Autenticar Usuário | Usuário cadastrado | 1. Fornecer credenciais<br>2. Chamar serviço de autenticação | Usuário autenticado com sucesso |
+| ID    | Descrição               | Pré-condições                    | Passos                                                              | Resultado Esperado                          |
+| ----- | ------------------------- | ----------------------------------- | ------------------------------------------------------------------- | ------------------------------------------- |
+| TS-01 | Listar Salas Disponíveis | Salas cadastradas                   | 1. Definir período de busca`<br>`2. Chamar serviço de busca     | Lista de salas disponíveis retornada       |
+| TS-02 | Criar Reserva             | Sala disponível e usuário válido | 1. Preparar dados da reserva`<br>`2. Chamar serviço de criação | Reserva criada com status pendente          |
+| TS-03 | Aprovar Reserva           | Reserva pendente existente          | 1. Identificar reserva`<br>`2. Chamar serviço de aprovação     | Reserva com status alterado para confirmada |
+| TS-04 | Autenticar Usuário       | Usuário cadastrado                 | 1. Fornecer credenciais`<br>`2. Chamar serviço de autenticação | Usuário autenticado com sucesso            |
 
 ### 9.3 Testes Funcionais
 
-| ID | Descrição | Pré-condições | Passos | Resultado Esperado |
-|----|-----------|---------------|--------|-------------------|
-| TF-01 | Fluxo de Reserva | Usuário autenticado | 1. Buscar sala disponível<br>2. Criar reserva<br>3. Aprovar reserva<br>4. Verificar status | Reserva confirmada visível no sistema |
-| TF-02 | Geração de Relatório | Dados de reservas existentes | 1. Acessar área de relatórios<br>2. Selecionar tipo de relatório<br>3. Definir parâmetros<br>4. Gerar relatório | Relatório gerado com dados corretos |
-| TF-03 | Manutenção de Sala | Sala ativa existente | 1. Acessar detalhes da sala<br>2. Agendar manutenção<br>3. Verificar status | Sala com status alterado para manutenção |
+| ID    | Descrição             | Pré-condições             | Passos                                                                                                                           | Resultado Esperado                         |
+| ----- | ----------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| TF-01 | Fluxo de Reserva        | Usuário autenticado         | 1. Buscar sala disponível`<br>`2. Criar reserva`<br>`3. Aprovar reserva`<br>`4. Verificar status                          | Reserva confirmada visível no sistema     |
+| TF-02 | Geração de Relatório | Dados de reservas existentes | 1. Acessar área de relatórios`<br>`2. Selecionar tipo de relatório`<br>`3. Definir parâmetros`<br>`4. Gerar relatório | Relatório gerado com dados corretos       |
+| TF-03 | Manutenção de Sala    | Sala ativa existente         | 1. Acessar detalhes da sala`<br>`2. Agendar manutenção`<br>`3. Verificar status                                            | Sala com status alterado para manutenção |
 
 ## 10. Riscos e Mitigação
 
-| Risco | Probabilidade | Impacto | Estratégia de Mitigação |
-|-------|--------------|---------|-------------------------|
-| Atrasos no cronograma | Média | Alto | Priorização de testes críticos, automação de testes repetitivos |
-| Falsos positivos/negativos | Média | Médio | Revisão manual dos resultados, melhoria contínua dos casos de teste |
-| Ambiente instável | Baixa | Alto | Configuração de ambiente dedicado, isolamento de testes |
-| Cobertura insuficiente | Média | Alto | Monitoramento constante da cobertura, adição de testes para áreas críticas |
+| Risco                      | Probabilidade | Impacto | Estratégia de Mitigação                                                     |
+| -------------------------- | ------------- | ------- | ------------------------------------------------------------------------------ |
+| Atrasos no cronograma      | Média        | Alto    | Priorização de testes críticos, automação de testes repetitivos           |
+| Falsos positivos/negativos | Média        | Médio  | Revisão manual dos resultados, melhoria contínua dos casos de teste          |
+| Ambiente instável         | Baixa         | Alto    | Configuração de ambiente dedicado, isolamento de testes                      |
+| Cobertura insuficiente     | Média        | Alto    | Monitoramento constante da cobertura, adição de testes para áreas críticas |
 
 ## 11. Responsabilidades
 
-| Papel | Responsabilidades |
-|-------|------------------|
-| Gerente de Testes | Coordenação geral, planejamento, relatórios |
-| Analista de Testes | Especificação de casos de teste, análise de resultados |
-| Desenvolvedor de Testes | Implementação de testes automatizados |
-| Testador | Execução de testes manuais, validação de correções |
-| Desenvolvedor | Correção de defeitos, suporte à equipe de testes |
+| Papel                   | Responsabilidades                                         |
+| ----------------------- | --------------------------------------------------------- |
+| Gerente de Testes       | Coordenação geral, planejamento, relatórios            |
+| Analista de Testes      | Especificação de casos de teste, análise de resultados |
+| Desenvolvedor de Testes | Implementação de testes automatizados                   |
+| Testador                | Execução de testes manuais, validação de correções  |
+| Desenvolvedor           | Correção de defeitos, suporte à equipe de testes       |
 
 ## 12. Aprovação
 

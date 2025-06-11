@@ -1,9 +1,7 @@
-from typing import Annotated, Optional
 import logging
-from fastapi import APIRouter, Depends, Response, status, Form, Path, Query
+from fastapi import APIRouter, Response, Form, Path
 from fastapi.requests import Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse
 
 from SalasTech.app.views import main_view, auth_view
 from SalasTech.app.models import dto
@@ -34,20 +32,20 @@ def check(req: Request, user: user_dependency):
 @router.get("/login")
 def login_page(req: Request, response: Response):
     # Generate CSRF token for the form
+def login_page(req: Request, response: Response):
+    # Generate CSRF token for the form
     csrf_token = csrf.CSRFProtection.generate_token()
     csrf.CSRFProtection.set_csrf_cookie(response, csrf_token)
     
-    return auth_view.login_page(req, error=None, csrf_token=csrf_token)
-
-@router.get("/register")
+    return auth_view.login_page(req, error="", csrf_token=csrf_token)
+def register_page(req: Request, response: Response):
+    # Generate CSRF token for the form
 def register_page(req: Request, response: Response):
     # Generate CSRF token for the form
     csrf_token = csrf.CSRFProtection.generate_token()
     csrf.CSRFProtection.set_csrf_cookie(response, csrf_token)
     
-    return auth_view.register_page(req, error=None, csrf_token=csrf_token)
-
-@router.get("/logout")
+    return auth_view.register_page(req, error="", csrf_token=csrf_token)
 async def logout(req: Request, res: Response):
     await session.logout(res)
     return auth_view.logout_redirect(req)
@@ -91,10 +89,14 @@ async def login_post(
     # Validate CSRF token
     form_data = await req.form()
     csrf_token = req.cookies.get(csrf.CSRF_COOKIE_NAME) or form_data.get(csrf.CSRF_FORM_FIELD)
+    form_data = await req.form()
+    csrf_token = req.cookies.get(csrf.CSRF_COOKIE_NAME)
+    if csrf_token is None:
+        csrf_token = form_data.get(csrf.CSRF_FORM_FIELD)
+    if not isinstance(csrf_token, str):
+        csrf_token = ""
     
     if not csrf_token or not csrf.CSRFProtection.validate_token(csrf_token):
-        logger.warning("CSRF validation failed for login")
-        # Generate new CSRF token for the form
         new_csrf_token = csrf.CSRFProtection.generate_token()
         csrf.CSRFProtection.set_csrf_cookie(res, new_csrf_token)
         return auth_view.login_page(req, error="Invalid form submission. Please try again.", csrf_token=new_csrf_token)
@@ -102,15 +104,15 @@ async def login_post(
     try:
         # Log login attempt (without password)
         logger.info(f"Login attempt for email: {username}")
-        
-        user_login = dto.UserLoginDTO(email=username, password=password)
-        token = await session.login(user_login, res)
+        await session.login(user_login, res)
         user = user_service.get_by_email(username)
         
         # Generate new CSRF token after successful login
         new_csrf_token = csrf.CSRFProtection.generate_token(str(user.id))
         csrf.CSRFProtection.set_csrf_cookie(res, new_csrf_token)
         
+        logger.info(f"Successful login for user: {user.email}")
+        return auth_view.login_success(req, user)
         logger.info(f"Successful login for user: {user.email}")
         return auth_view.login_success(req, user)
     except AppException as e:
@@ -216,12 +218,14 @@ async def register_post(req: Request,
     except Exception as e:
         logger.warning(f"Rate limit exceeded for registration: {str(e)}")
         return auth_view.register_page(req, error="Too many registration attempts. Please try again later.")
-    
-    # Validate CSRF token
     csrf_token = req.cookies.get(csrf.CSRF_COOKIE_NAME)
     if not csrf_token:
         form_data = await req.form()
         csrf_token = form_data.get(csrf.CSRF_FORM_FIELD)
+    if not isinstance(csrf_token, str):
+        csrf_token = ""
+    
+    if not csrf_token or not csrf.CSRFProtection.validate_token(csrf_token):
     
     if not csrf_token or not csrf.CSRFProtection.validate_token(csrf_token):
         logger.warning("CSRF validation failed for registration")
@@ -260,10 +264,6 @@ async def register_post(req: Request,
         user_create = dto.UserCreateDTO(
             name=name,
             surname=surname,
-            email=email,
-            password=password
-        )
-        
         user = user_service.create_user(user_create)
         
         # Generate new CSRF token for the user
@@ -271,9 +271,14 @@ async def register_post(req: Request,
         csrf.CSRFProtection.set_csrf_cookie(res, new_csrf_token)
         
         logger.info(f"Successful registration for user: {user.email}")
-        return auth_view.register_success(req, user)
+        # Show login page with a success message after registration
+        return auth_view.login_page(req, error="Registration successful. Please log in.", csrf_token=new_csrf_token)
     except AppException as e:
         logger.warning(f"Failed registration for {email}: {e.message}")
+        # Generate new CSRF token
+        new_csrf_token = csrf.CSRFProtection.generate_token()
+        csrf.CSRFProtection.set_csrf_cookie(res, new_csrf_token)
+        return auth_view.register_page(req, error=e.message, csrf_token=new_csrf_token)
         # Generate new CSRF token
         new_csrf_token = csrf.CSRFProtection.generate_token()
         csrf.CSRFProtection.set_csrf_cookie(res, new_csrf_token)

@@ -70,14 +70,14 @@ def create_reservation(reservation: dto.ReservationCreate, current_user: dto.Use
     """
     Cria uma nova reserva
     """
-    return reservation_service.create_reservation(reservation, current_user)
+    return reservation_service.create_reservation(current_user.id, reservation)
 
 @router.put("/{id}", response_model=dto.ReservationResponse)
 def update_reservation(id: int, reservation: dto.ReservationUpdate, current_user: dto.UserDTO = Depends(session.get_user)):
     """
     Atualiza uma reserva existente
     """
-    return reservation_service.update_reservation(id, reservation, current_user)
+    return reservation_service.update_reservation(id, current_user.id, reservation)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def cancel_reservation(
@@ -88,7 +88,7 @@ def cancel_reservation(
     """
     Cancela uma reserva
     """
-    reservation_service.cancel_reservation(id, current_user, reason)
+    reservation_service.cancel_reservation(id, current_user.id, reason)
 
 @router.get("/room/{room_id}", response_model=list[dto.ReservationResponse])
 def get_by_room(
