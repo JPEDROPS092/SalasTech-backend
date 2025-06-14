@@ -176,7 +176,7 @@ def send_weekly_summary(user_id: int) -> bool:
     return True
 
 
-def send_batch_reminders() -> int:
+def enviar_lembretes_em_lote() -> int:
     """
     Envia lembretes em lote para reservas que ocorrerão em breve
     Retorna o número de lembretes enviados

@@ -1,198 +1,209 @@
 """
 Tarefas agendadas para gerenciamento de reservas.
 
-Este módulo contém tarefas agendadas para gerenciamento automático de reservas,
-como aprovação automática, envio de lembretes, atualização de status, etc.
+Este módulo contém a lógica para a execução de tarefas automáticas e periódicas
+relacionadas às reservas de salas na aplicação SalasTech. Isso inclui
+aprovação automática, envio de lembretes, atualização de status de reservas,
+limpeza de dados antigos e verificação de não comparecimentos.
 """
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 
 from SalasTech.app.models import enums
-from SalasTech.app.services import reservation_service
-from SalasTech.app.services import notification_service
-from SalasTech.app.repos import reservation_repo
+from SalasTech.app.services import reservation_service as servico_reservas # Alias traduzido para o serviço de reservas
+from SalasTech.app.services import notification_service as servico_notificacoes # Alias traduzido para o serviço de notificações
+from SalasTech.app.repos import reservation_repo as repositorio_reservas # Alias traduzido para o repositório de reservas
 
-# Configurar logger
+# Configurar o logger para este módulo
 logger = logging.getLogger(__name__)
 
 
-def auto_approve_reservations() -> int:
+def aprovar_reservas_automaticamente() -> int:
     """
-    Aprova automaticamente reservas pendentes após 24 horas.
+    Aprova automaticamente reservas pendentes após um período definido (ex: 24 horas).
     
-    Esta tarefa deve ser executada periodicamente (ex: a cada hora).
+    Esta função deve ser agendada para execução periódica, idealmente a cada hora,
+    para garantir que as reservas não fiquem pendentes indefinidamente.
 
     Returns:
-        Número de reservas aprovadas automaticamente
+        int: O número de reservas que foram aprovadas automaticamente nesta execução.
     """
     try:
-        count = reservation_service.auto_approve_reservations()
-        logger.info(f"Aprovação automática: {count} reservas aprovadas")
-        return count
+        contagem = servico_reservas.aprovar_reservas_automaticamente() # Chama a função traduzida no serviço
+        logger.info(f"Aprovação automática: {contagem} reservas aprovadas.")
+        return contagem
     except Exception as e:
-        logger.error(f"Erro na aprovação automática de reservas: {str(e)}")
+        logger.error(f"Erro durante a aprovação automática de reservas: {str(e)}", exc_info=True)
         return 0
 
 
-def send_reminders() -> int:
+def enviar_lembretes() -> int:
     """
-    Envia lembretes para reservas que ocorrerão em breve.
+    Envia lembretes para reservas que estão programadas para ocorrer em breve.
     
-    Esta tarefa deve ser executada periodicamente (ex: a cada hora).
-    Envia lembretes para reservas que ocorrerão nas próximas 24 horas.
+    Esta função é projetada para ser executada periodicamente (ex: a cada hora)
+    e envia notificações para os usuários sobre suas reservas futuras,
+    especialmente aquelas que iniciarão nas próximas 24 horas.
 
     Returns:
-        Número de lembretes enviados
+        int: O número de lembretes que foram enviados nesta execução.
     """
     try:
-        count = notification_service.send_batch_reminders()
-        logger.info(f"Lembretes enviados: {count}")
-        return count
+        contagem = servico_notificacoes.enviar_lembretes_em_lote() # Chama a função traduzida no serviço
+        logger.info(f"Lembretes enviados: {contagem}.")
+        return contagem
     except Exception as e:
-        logger.error(f"Erro no envio de lembretes: {str(e)}")
+        logger.error(f"Erro no envio de lembretes: {str(e)}", exc_info=True)
         return 0
 
 
-def update_reservation_status() -> Dict[str, int]:
+def atualizar_status_reservas() -> Dict[str, int]:
     """
-    Atualiza o status das reservas com base no horário atual.
+    Atualiza o status das reservas no banco de dados com base no horário atual.
     
-    Esta tarefa deve ser executada periodicamente (ex: a cada 5 minutos).
-    - Reservas que já começaram são marcadas como EM_ANDAMENTO
-    - Reservas que já terminaram são marcadas como FINALIZADA
+    Esta função deve ser executada com alta frequência (ex: a cada 5 minutos) para
+    manter os status das reservas atualizados:
+    - Reservas com `status` CONFIRMADA cujo `inicio_data_hora` já passou são marcadas como EM_ANDAMENTO.
+    - Reservas com `status` EM_ANDAMENTO cujo `fim_data_hora` já passou são marcadas como FINALIZADA.
 
     Returns:
-        Dicionário com contagem de atualizações por status
+        Dict[str, int]: Um dicionário contendo a contagem de reservas que tiveram seu status
+                        atualizado para "iniciadas" e "finalizadas".
     """
     try:
-        now = datetime.now(timezone.utc)
+        agora = datetime.now(timezone.utc)
         
-        # Atualizar reservas que já começaram para EM_ANDAMENTO
-        started_count = reservation_repo.update_status_by_time(
+        # Atualiza reservas que já começaram para EM_ANDAMENTO
+        contagem_iniciadas = repositorio_reservas.update_reservation_status_by_time(
             old_status=enums.ReservationStatus.CONFIRMADA,
             new_status=enums.ReservationStatus.EM_ANDAMENTO,
-            start_datetime_before=now,
-            end_datetime_after=now
+            start_datetime_before=agora,
+            end_datetime_after=agora
         )
         
-        # Atualizar reservas que já terminaram para FINALIZADA
-        finished_count = reservation_repo.update_status_by_time(
+        # Atualiza reservas que já terminaram para CONCLUIDA
+        contagem_finalizadas = repositorio_reservas.update_reservation_status_by_time(
             old_status=enums.ReservationStatus.EM_ANDAMENTO,
-            new_status=enums.ReservationStatus.FINALIZADA,
-            end_datetime_before=now
+            new_status=enums.ReservationStatus.CONCLUIDA,
+            end_datetime_before=agora
         )
         
-        result = {
-            "started": started_count,
-            "finished": finished_count
+        resultado = {
+            "iniciadas": contagem_iniciadas,
+            "finalizadas": contagem_finalizadas
         }
         
-        logger.info(f"Atualização de status: {result}")
-        return result
+        logger.info(f"Atualização de status de reservas: {resultado}")
+        return resultado
     
     except Exception as e:
-        logger.error(f"Erro na atualização de status de reservas: {str(e)}")
-        return {"started": 0, "finished": 0}
+        logger.error(f"Erro na atualização de status de reservas: {str(e)}", exc_info=True)
+        return {"iniciadas": 0, "finalizadas": 0}
 
 
-def cleanup_old_reservations(days: int = 90) -> int:
+
+
+def verificar_nao_comparecimentos() -> List[Dict[str, Any]]:
     """
-    Remove ou arquiva reservas antigas.
-    
-    Esta tarefa deve ser executada periodicamente (ex: uma vez por semana).
-    Reservas finalizadas ou canceladas há mais de X dias são arquivadas.
-
-    Args:
-        days: Número de dias para considerar uma reserva como antiga
-
-    Returns:
-        Número de reservas arquivadas
-    """
-    try:
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
-        
-        # Na implementação real, você pode mover as reservas para uma tabela de arquivo
-        # ou simplesmente marcá-las como arquivadas
-        count = reservation_repo.archive_old_reservations(
-            cutoff_date=cutoff_date,
-            statuses=[
-                enums.ReservationStatus.FINALIZADA,
-                enums.ReservationStatus.CANCELADA
-            ]
-        )
-        
-        logger.info(f"Limpeza de reservas antigas: {count} reservas arquivadas")
-        return count
-    
-    except Exception as e:
-        logger.error(f"Erro na limpeza de reservas antigas: {str(e)}")
-        return 0
-
-
-def check_no_shows() -> List[Dict[str, Any]]:
-    """
-    Verifica reservas que não foram utilizadas (no-shows).
+    Identifica e lista reservas para as quais o usuário não compareceu (no-show).
     
     Esta tarefa deve ser executada periodicamente (ex: uma vez por dia).
-    Identifica reservas que não foram marcadas como EM_ANDAMENTO
-    mesmo após 30 minutos do horário de início.
+    Ela busca por reservas que tinham `status` CONFIRMADA, cujo `inicio_data_hora`
+    já passou há mais de um `limite_tempo` (ex: 30 minutos), mas que não foram
+    atualizadas para EM_ANDAMENTO.
 
     Returns:
-        Lista de reservas identificadas como no-shows
+        List[Dict[str, Any]]: Uma lista de dicionários, onde cada dicionário representa
+                               uma reserva identificada como um potencial não comparecimento.
     """
     try:
-        now = datetime.now(timezone.utc)
-        threshold = now - timedelta(minutes=30)
+        agora = datetime.now(timezone.utc)
+        limite_tempo = agora - timedelta(minutes=30) # 30 minutos após o início previsto
         
         # Buscar reservas confirmadas que já deveriam ter começado há pelo menos 30 minutos
-        no_shows = reservation_repo.get_potential_no_shows(
+        nao_comparecimentos_potenciais = repositorio_reservas.get_potential_no_shows(
             status=enums.ReservationStatus.CONFIRMADA,
-            start_datetime_before=threshold,
-            end_datetime_after=now
+            start_before=limite_tempo,
+            end_after=agora
         )
         
-        # Registrar no-shows (na implementação real, você pode notificar administradores)
-        result = []
-        for reservation in no_shows:
-            # Aqui você pode implementar lógica adicional, como notificar administradores
-            # ou marcar a reserva com uma flag de no-show
-            result.append({
-                "id": reservation.id,
-                "room_id": reservation.room_id,
-                "user_id": reservation.user_id,
-                "title": reservation.title,
-                "start_datetime": reservation.start_datetime,
-                "end_datetime": reservation.end_datetime
+        resultado = []
+        for reserva in nao_comparecimentos_potenciais:
+            # Aqui pode ser implementada lógica adicional, como:
+            # - Notificar administradores sobre o não comparecimento.
+            # - Marcar a reserva com uma flag de no-show para análise futura.
+            # - Implementar políticas de penalidade para não comparecimentos recorrentes.
+            resultado.append({
+                "id": reserva.id,
+                "room_id": reserva.room_id,
+                "user_id": reserva.user_id,
+                "title": reserva.title,
+                "start_datetime": reserva.start_datetime,
+                "end_datetime": reserva.end_datetime
             })
         
-        logger.info(f"Verificação de no-shows: {len(result)} reservas identificadas")
-        return result
+        logger.info(f"Verificação de não comparecimentos: {len(resultado)} reservas identificadas.")
+        return resultado
     
     except Exception as e:
-        logger.error(f"Erro na verificação de no-shows: {str(e)}")
+        logger.error(f"Erro na verificação de não comparecimentos: {str(e)}", exc_info=True)
         return []
 
 
-def send_weekly_summary() -> int:
+def enviar_resumo_semanal() -> int:
     """
-    Envia resumo semanal de reservas para usuários.
+    Envia um resumo semanal de reservas para os usuários do sistema.
     
-    Esta tarefa deve ser executada uma vez por semana (ex: domingo à noite).
-    Envia um email com as reservas da próxima semana para cada usuário.
+    Esta tarefa deve ser executada uma vez por semana (ex: no final do domingo)
+    para fornecer aos usuários uma visão consolidada de suas reservas futuras
+    ou um relatório de uso da semana anterior.
 
     Returns:
-        Número de resumos enviados
+        int: O número de resumos semanais que foram enviados.
     """
     try:
-        # Na implementação real, você buscaria todos os usuários ativos
-        # e enviaria um resumo personalizado para cada um
-        count = 0
+        # Buscar todos os usuários ativos
+        from SalasTech.app.repos import user_repo
+        usuarios_ativos = user_repo.get(limit=10000)  # Buscar todos os usuários
         
-        # Placeholder para demonstração
-        logger.info(f"Resumos semanais enviados: {count}")
-        return count
+        contagem = 0
+        for usuario in usuarios_ativos:
+            # Para cada usuário, buscar suas próximas reservas
+            proximas_reservas = repositorio_reservas.get_upcoming(
+                user_id=usuario.id, 
+                limit=20, 
+                hours_ahead=7*24  # próximos 7 dias
+            )
+            
+            # Enviar resumo semanal via serviço de notificação
+            if servico_notificacoes.send_weekly_summary(usuario.id):
+                contagem += 1
+        
+        logger.info(f"Resumos semanais enviados: {contagem}.")
+        return contagem
     
     except Exception as e:
-        logger.error(f"Erro no envio de resumos semanais: {str(e)}")
+        logger.error(f"Erro no envio de resumos semanais: {str(e)}", exc_info=True)
+        return 0
+
+
+def limpar_reservas_antigas() -> int:
+    """
+    Limpa reservas antigas do sistema.
+    
+    Esta função deve ser executada periodicamente (ex: uma vez por semana)
+    para remover reservas antigas e manter o banco de dados otimizado.
+    Remove reservas canceladas ou concluídas que são mais antigas que 90 dias.
+
+    Returns:
+        int: O número de reservas que foram removidas.
+    """
+    try:
+        # Usar a função do repositório para deletar reservas antigas
+        contagem = repositorio_reservas.delete_old_reservations(days_old=90)
+        logger.info(f"Limpeza de reservas antigas: {contagem} reservas removidas.")
+        return contagem
+    except Exception as e:
+        logger.error(f"Erro na limpeza de reservas antigas: {str(e)}", exc_info=True)
         return 0

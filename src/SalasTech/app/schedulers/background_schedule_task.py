@@ -61,7 +61,7 @@ def setup_scheduler(db_url: str) -> AsyncIOScheduler:
     
     # Atualização de status de reservas (a cada 5 minutos)
     scheduler.add_job(
-        reservation_scheduler.update_reservation_status,
+        reservation_scheduler.atualizar_status_reservas,
         trigger=IntervalTrigger(minutes=5),
         id='update_reservation_status',
         name='Atualizar status de reservas',
@@ -70,7 +70,7 @@ def setup_scheduler(db_url: str) -> AsyncIOScheduler:
     
     # Aprovação automática de reservas (a cada hora)
     scheduler.add_job(
-        reservation_scheduler.auto_approve_reservations,
+        reservation_scheduler.aprovar_reservas_automaticamente,
         trigger=IntervalTrigger(hours=1),
         id='auto_approve_reservations',
         name='Aprovar reservas automaticamente',
@@ -79,25 +79,18 @@ def setup_scheduler(db_url: str) -> AsyncIOScheduler:
     
     # Envio de lembretes (a cada hora)
     scheduler.add_job(
-        reservation_scheduler.send_reminders,
+        reservation_scheduler.enviar_lembretes,
         trigger=IntervalTrigger(hours=1),
         id='send_reminders',
         name='Enviar lembretes de reservas',
         replace_existing=True
     )
     
-    # Verificação de no-shows (diariamente às 23:00)
-    scheduler.add_job(
-        reservation_scheduler.check_no_shows,
-        trigger=CronTrigger(hour=23, minute=0),
-        id='check_no_shows',
-        name='Verificar reservas não utilizadas',
-        replace_existing=True
-    )
+    
     
     # Limpeza de reservas antigas (semanalmente, domingo às 03:00)
     scheduler.add_job(
-        reservation_scheduler.cleanup_old_reservations,
+        reservation_scheduler.limpar_reservas_antigas,
         trigger=CronTrigger(day_of_week='sun', hour=3, minute=0),
         id='cleanup_old_reservations',
         name='Limpar reservas antigas',
@@ -106,7 +99,7 @@ def setup_scheduler(db_url: str) -> AsyncIOScheduler:
     
     # Envio de resumo semanal (domingo às 20:00)
     scheduler.add_job(
-        reservation_scheduler.send_weekly_summary,
+        reservation_scheduler.enviar_resumo_semanal,
         trigger=CronTrigger(day_of_week='sun', hour=20, minute=0),
         id='send_weekly_summary',
         name='Enviar resumo semanal',

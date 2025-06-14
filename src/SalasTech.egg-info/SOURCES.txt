@@ -1,7 +1,6 @@
 LICENSE
 README.md
 pyproject.toml
-setup.py
 src/SalasTech/__init__.py
 src/SalasTech.egg-info/PKG-INFO
 src/SalasTech.egg-info/SOURCES.txt
@@ -47,6 +46,8 @@ src/SalasTech/app/repos/reservation_repo.py
 src/SalasTech/app/repos/room_repo.py
 src/SalasTech/app/repos/user_repo.py
 src/SalasTech/app/schedulers/background_schedule_task.py
+src/SalasTech/app/schedulers/maintenance_scheduler.py
+src/SalasTech/app/schedulers/reservation_scheduler.py
 src/SalasTech/app/services/department_service.py
 src/SalasTech/app/services/notification_service.py
 src/SalasTech/app/services/report_service.py
@@ -54,13 +55,9 @@ src/SalasTech/app/services/reservation_service.py
 src/SalasTech/app/services/room_service.py
 src/SalasTech/app/services/user_service.py
 src/SalasTech/app/utils/formatting.py
+src/SalasTech/app/utils/notification_utils.py
+src/SalasTech/app/utils/reservation_utils.py
 src/SalasTech/app/utils/seed_database.py
-src/SalasTech/app/views/auth_view.py
-src/SalasTech/app/views/common_view.py
-src/SalasTech/app/views/dashboard_view.py
-src/SalasTech/app/views/main_view.py
-src/SalasTech/app/views/reservation_view.py
-src/SalasTech/app/views/room_view.py
 src/SalasTech/cli/__init__.py
 src/SalasTech/cli/main.py
 src/SalasTech/cli/commands/__init__.py

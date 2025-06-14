@@ -58,7 +58,7 @@ def generate_usage_report(start_date: datetime, end_date: datetime,
     return report
 
 
-def generate_occupancy_report(start_date: datetime, end_date: datetime) -> List[dto.RoomOccupancyReport]:
+def generate_occupancy_report(start_date: datetime, end_date: datetime) -> List[dto.RelatorioOcupacaoSalaDTO]:
     """
     Gera relatório de taxa de ocupação por sala
     """
@@ -75,24 +75,24 @@ def generate_occupancy_report(start_date: datetime, end_date: datetime) -> List[
         stats = room_repo.get_room_utilization(room.id, start_date, end_date)
         
         # Criar objeto de relatório
-        occupancy = dto.RoomOccupancyReport(
-            room_id=room.id,
-            room_code=room.code,
-            room_name=room.name,
-            total_reservations=stats["total_reservations"],
-            total_hours=stats["total_hours"],
-            occupancy_rate=stats["occupancy_rate"]
+        occupancy = dto.RelatorioOcupacaoSalaDTO(
+            sala_id=room.id,
+            codigo_sala=room.codigo,
+            nome_sala=room.nome,
+            total_reservas=stats["total_reservations"],
+            total_horas=stats["total_hours"],
+            taxa_ocupacao=stats["occupancy_rate"]
         )
         
         report.append(occupancy)
     
     # Ordenar por taxa de ocupação (decrescente)
-    report.sort(key=lambda x: x.occupancy_rate, reverse=True)
+    report.sort(key=lambda x: x.taxa_ocupacao, reverse=True)
     
     return report
 
 
-def generate_department_usage_report(start_date: datetime, end_date: datetime) -> List[dto.DepartmentUsageReport]:
+def generate_department_usage_report(start_date: datetime, end_date: datetime) -> List[dto.RelatorioUsoDepartamentoDTO]:
     """
     Gera relatório de uso por departamento
     """
@@ -118,13 +118,13 @@ def generate_department_usage_report(start_date: datetime, end_date: datetime) -
             total_reservations += stats["total_reservations"]
             
             # Criar objeto de ocupação da sala
-            room_occupancy = dto.RoomOccupancyReport(
-                room_id=room.id,
-                room_code=room.code,
-                room_name=room.name,
-                total_reservations=stats["total_reservations"],
-                total_hours=stats["total_hours"],
-                occupancy_rate=stats["occupancy_rate"]
+            room_occupancy = dto.RelatorioOcupacaoSalaDTO(
+                sala_id=room.id,
+                codigo_sala=room.codigo,
+                nome_sala=room.nome,
+                total_reservas=stats["total_reservations"],
+                total_horas=stats["total_hours"],
+                taxa_ocupacao=stats["occupancy_rate"]
             )
             
             rooms_usage.append(room_occupancy)

@@ -13,7 +13,7 @@ from SalasTech.app.exceptions.scheme import AppException
 
 def get_all(limit: int = 1000, offset: int = 0, 
            status: Optional[enums.RoomStatus] = None, 
-           department_id: Optional[int] = None) -> List[dto.RoomResponse]:
+           department_id: Optional[int] = None) -> List[dto.SalaRespostaDTO]:
     """
     Retorna todas as salas com filtros opcionais
     """
@@ -21,7 +21,7 @@ def get_all(limit: int = 1000, offset: int = 0,
     return [_db_to_response(room) for room in rooms]
 
 
-def get_by_id(id: int) -> dto.RoomResponse:
+def get_by_id(id: int) -> dto.SalaRespostaDTO:
     """
     Busca uma sala pelo ID
     """
@@ -32,7 +32,7 @@ def get_by_id(id: int) -> dto.RoomResponse:
     return _db_to_response(room)
 
 
-def get_by_code(code: str) -> dto.RoomResponse:
+def get_by_code(code: str) -> dto.SalaRespostaDTO:
     """
     Busca uma sala pelo código
     """
@@ -44,13 +44,13 @@ def get_by_code(code: str) -> dto.RoomResponse:
     return _db_to_response(room)
 
 
-def create_room(obj: dto.RoomCreate) -> dto.RoomResponse:
+def criar_sala(obj: dto.SalaCriarDTO) -> dto.SalaRespostaDTO:
     """
     Cria uma nova sala
     """
     # Formatar e validar dados
-    code_formatted = formatting.format_string(obj.code)
-    name_formatted = formatting.format_string(obj.name)
+    code_formatted = formatting.format_string(obj.codigo)
+    name_formatted = formatting.format_string(obj.nome)
     
     if code_formatted == "":
         raise AppException(message="Código é obrigatório", status_code=422)
@@ -58,7 +58,7 @@ def create_room(obj: dto.RoomCreate) -> dto.RoomResponse:
     if name_formatted == "":
         raise AppException(message="Nome é obrigatório", status_code=422)
     
-    if obj.capacity <= 0:
+    if obj.capacidade <= 0:
         raise AppException(message="Capacidade deve ser maior que zero", status_code=422)
     
     # Verificar se já existe sala com o mesmo código
@@ -67,37 +67,37 @@ def create_room(obj: dto.RoomCreate) -> dto.RoomResponse:
         raise AppException(message="Já existe uma sala com este código", status_code=422)
     
     # Verificar se o departamento existe
-    department = department_repo.get_by_id(obj.department_id)
+    department = department_repo.get_by_id(obj.departamento_id)
     if department is None:
         raise AppException(message="Departamento não encontrado", status_code=422)
     
     # Criar a sala
-    room = db.RoomDb()
-    room.code = code_formatted
-    room.name = name_formatted
-    room.capacity = obj.capacity
-    room.building = obj.building
-    room.floor = obj.floor
-    room.department_id = obj.department_id
+    room = db.SalaDb()
+    room.codigo = code_formatted
+    room.nome = name_formatted
+    room.capacidade = obj.capacidade
+    room.predio = obj.predio
+    room.andar = obj.andar
+    room.departamento_id = obj.departamento_id
     room.status = obj.status
-    room.responsible = obj.responsible
-    room.description = obj.description
+    room.responsavel = obj.responsavel
+    room.descricao = obj.descricao
     
     # Adicionar recursos, se houver
-    if obj.resources:
+    if obj.recursos:
         room.resources_to_add = []
-        for resource_data in obj.resources:
-            resource = db.RoomResourceDb()
-            resource.resource_name = resource_data.resource_name
-            resource.quantity = resource_data.quantity
-            resource.description = resource_data.description
+        for resource_data in obj.recursos:
+            resource = db.RecursoSalaDb()
+            resource.nome_recurso = resource_data.nome_recurso
+            resource.quantidade = resource_data.quantidade
+            resource.descricao = resource_data.descricao
             room.resources_to_add.append(resource)
     
     created_room = room_repo.add(room)
     return _db_to_response(created_room)
 
 
-def update_room(id: int, obj: dto.RoomUpdate) -> dto.RoomResponse:
+def atualizar_sala(id: int, obj: dto.SalaAtualizarDTO) -> dto.SalaRespostaDTO:
     """
     Atualiza uma sala existente
     """
@@ -107,44 +107,44 @@ def update_room(id: int, obj: dto.RoomUpdate) -> dto.RoomResponse:
         raise AppException(message="Sala não encontrada", status_code=404)
     
     # Atualizar apenas os campos fornecidos
-    if obj.name is not None:
-        room.name = formatting.format_string(obj.name)
+    if obj.nome is not None:
+        room.nome = formatting.format_string(obj.nome)
     
-    if obj.capacity is not None:
-        if obj.capacity <= 0:
+    if obj.capacidade is not None:
+        if obj.capacidade <= 0:
             raise AppException(message="Capacidade deve ser maior que zero", status_code=422)
-        room.capacity = obj.capacity
+        room.capacidade = obj.capacidade
     
-    if obj.building is not None:
-        room.building = obj.building
+    if obj.predio is not None:
+        room.predio = obj.predio
     
-    if obj.floor is not None:
-        room.floor = obj.floor
+    if obj.andar is not None:
+        room.andar = obj.andar
     
-    if obj.department_id is not None:
+    if obj.departamento_id is not None:
         # Verificar se o departamento existe
-        department = department_repo.get_by_id(obj.department_id)
+        department = department_repo.get_by_id(obj.departamento_id)
         if department is None:
             raise AppException(message="Departamento não encontrado", status_code=422)
-        room.department_id = obj.department_id
+        room.departamento_id = obj.departamento_id
     
     if obj.status is not None:
         room.status = obj.status
     
-    if obj.responsible is not None:
-        room.responsible = obj.responsible
+    if obj.responsavel is not None:
+        room.responsavel = obj.responsavel
     
-    if obj.description is not None:
-        room.description = obj.description
+    if obj.descricao is not None:
+        room.descricao = obj.descricao
     
     # Atualizar recursos, se fornecidos
-    if obj.resources is not None:
+    if obj.recursos is not None:
         room.resources_to_add = []
-        for resource_data in obj.resources:
-            resource = db.RoomResourceDb()
-            resource.resource_name = resource_data.resource_name
-            resource.quantity = resource_data.quantity
-            resource.description = resource_data.description
+        for resource_data in obj.recursos:
+            resource = db.RecursoSalaDb()
+            resource.nome_recurso = resource_data.nome_recurso
+            resource.quantidade = resource_data.quantidade
+            resource.descricao = resource_data.descricao
             room.resources_to_add.append(resource)
     
     room_repo.update(room)
@@ -154,7 +154,7 @@ def update_room(id: int, obj: dto.RoomUpdate) -> dto.RoomResponse:
     return _db_to_response(updated_room)
 
 
-def delete_room(id: int) -> None:
+def excluir_sala(id: int) -> None:
     """
     Exclui uma sala
     """
@@ -171,7 +171,7 @@ def delete_room(id: int) -> None:
         raise AppException(message="Erro ao excluir sala", status_code=500)
 
 
-def check_availability(room_id: int, start_datetime: datetime, end_datetime: datetime) -> dict:
+def verificar_disponibilidade(room_id: int, start_datetime: datetime, end_datetime: datetime) -> dict:
     """
     Verifica a disponibilidade de uma sala para um período
     """
@@ -207,9 +207,9 @@ def check_availability(room_id: int, start_datetime: datetime, end_datetime: dat
         result["conflicts"] = [
             {
                 "reservation_id": conflict.id,
-                "title": conflict.title,
-                "start_datetime": conflict.start_datetime,
-                "end_datetime": conflict.end_datetime,
+                "title": conflict.titulo,
+                "start_datetime": conflict.inicio_data_hora,
+                "end_datetime": conflict.fim_data_hora,
                 "status": conflict.status
             }
             for conflict in conflicts
@@ -218,9 +218,9 @@ def check_availability(room_id: int, start_datetime: datetime, end_datetime: dat
     return result
 
 
-def get_available_rooms(start_datetime: datetime, end_datetime: datetime,
+def obter_salas_disponiveis(start_datetime: datetime, end_datetime: datetime,
                        department_id: Optional[int] = None,
-                       capacity: Optional[int] = None) -> List[dto.RoomResponse]:
+                       capacity: Optional[int] = None) -> List[dto.SalaRespostaDTO]:
     """
     Retorna salas disponíveis para um período específico
     """
@@ -239,7 +239,7 @@ def get_available_rooms(start_datetime: datetime, end_datetime: datetime,
     return [_db_to_response(room) for room in available_rooms]
 
 
-def schedule_maintenance(room_id: int, start_datetime: datetime, end_datetime: datetime, description: str) -> None:
+def agendar_manutencao(room_id: int, start_datetime: datetime, end_datetime: datetime, description: str) -> None:
     """
     Agenda manutenção para uma sala (mudando seu status e potencialmente criando uma reserva de sistema)
     """
@@ -261,7 +261,7 @@ def schedule_maintenance(room_id: int, start_datetime: datetime, end_datetime: d
     # Ou registrar em uma tabela específica de manutenções
 
 
-def get_room_utilization(room_id: int, start_date: datetime, end_date: datetime) -> dict:
+def obter_utilizacao_sala(room_id: int, start_date: datetime, end_date: datetime) -> dict:
     """
     Retorna estatísticas de utilização de uma sala
     """
@@ -274,13 +274,13 @@ def get_room_utilization(room_id: int, start_date: datetime, end_date: datetime)
     stats = room_repo.get_room_utilization(room_id, start_date, end_date)
     
     # Adicionar informações da sala
-    stats["room_code"] = room.code
-    stats["room_name"] = room.name
+    stats["room_code"] = room.codigo
+    stats["room_name"] = room.nome
     
     return stats
 
 
-def search_rooms(query: str, limit: int = 1000, offset: int = 0) -> List[dto.RoomResponse]:
+def buscar_salas(query: str, limit: int = 1000, offset: int = 0) -> List[dto.SalaRespostaDTO]:
     """
     Busca salas por nome, código ou descrição
     """
@@ -288,7 +288,7 @@ def search_rooms(query: str, limit: int = 1000, offset: int = 0) -> List[dto.Roo
     return [_db_to_response(room) for room in rooms]
 
 
-def check_room_permissions(room_id: int, user_id: int) -> bool:
+def verificar_permissoes_sala(room_id: int, user_id: int) -> bool:
     """
     Verifica se um usuário tem permissão para acessar uma sala
     """
@@ -297,36 +297,36 @@ def check_room_permissions(room_id: int, user_id: int) -> bool:
     return True
 
 
-def _db_to_response(room: db.RoomDb) -> dto.RoomResponse:
+def _db_to_response(room: db.SalaDb) -> dto.SalaRespostaDTO:
     """
-    Converte um objeto RoomDb para RoomResponse
+    Converte um objeto SalaDb para SalaRespostaDTO
     """
     # Converter recursos
-    resources = []
-    if hasattr(room, 'resources') and room.resources:
-        for resource in room.resources:
-            resources.append(dto.RoomResourceResponse(
+    recursos = []
+    if hasattr(room, 'recursos') and room.recursos:
+        for resource in room.recursos:
+            recursos.append(dto.RecursoSalaRespostaDTO(
                 id=resource.id,
-                room_id=resource.room_id,
-                resource_name=resource.resource_name,
-                quantity=resource.quantity,
-                description=resource.description,
-                created_at=resource.created_at,
-                updated_at=resource.updated_at
+                sala_id=resource.sala_id,
+                nome_recurso=resource.nome_recurso,
+                quantidade=resource.quantidade,
+                descricao=resource.descricao,
+                criado_em=resource.criado_em,
+                atualizado_em=resource.atualizado_em
             ))
     
-    return dto.RoomResponse(
+    return dto.SalaRespostaDTO(
         id=room.id,
-        code=room.code,
-        name=room.name,
-        capacity=room.capacity,
-        building=room.building,
-        floor=room.floor,
-        department_id=room.department_id,
+        codigo=room.codigo,
+        nome=room.nome,
+        capacidade=room.capacidade,
+        predio=room.predio,
+        andar=room.andar,
+        departamento_id=room.departamento_id,
         status=room.status,
-        responsible=room.responsible,
-        description=room.description,
-        resources=resources,
-        created_at=room.created_at,
-        updated_at=room.updated_at
+        responsavel=room.responsavel,
+        descricao=room.descricao,
+        recursos=recursos,
+        criado_em=room.criado_em,
+        atualizado_em=room.atualizado_em
     )

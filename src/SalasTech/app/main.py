@@ -1,68 +1,122 @@
+# -*- coding: utf-8 -*-
+"""
+Módulo Principal da Aplicação SalasTech
+
+Este é o ponto de entrada principal para a aplicação SalasTech, um sistema de gerenciamento 
+de salas para o IFAM. O módulo configura a aplicação FastAPI com todas as dependências,
+middlewares de segurança, controladores de API e documentação personalizada.
+
+Características principais:
+- Configuração de autenticação JWT
+- Middleware de segurança (CORS, Rate Limiting, CSRF)
+- Documentação OpenAPI personalizada
+- Integração com controladores de API
+- Sistema de logs estruturado
+
+Autor: Equipe SalasTech
+Data: Junho 2025
+Versão: 1.0.0
+"""
+
 from fastapi import FastAPI
 import logging
 from fastapi.openapi.utils import get_openapi
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.middleware.cors import CORSMiddleware
 
+# Importações do núcleo da aplicação
 from SalasTech.app.core import lifespan
-from SalasTech.app.controllers.pages import page_controller
+
+# Importações dos controladores da API
 from SalasTech.app.controllers.api import (
-    auth_controller,
-    user_controller,
-    room_controller,
-    reservation_controller,
-    department_controller,
-    report_controller
+    auth_controller,           # Controlador de autenticação
+    user_controller,           # Controlador de usuários
+    room_controller,           # Controlador de salas
+    reservation_controller,    # Controlador de reservas
+    department_controller,     # Controlador de departamentos
+    report_controller          # Controlador de relatórios
 )
 
+# Importações de middlewares de segurança
 from SalasTech.app.core.middlewares import cors_middleware
 from SalasTech.app.core.middlewares import static_middleware
 from SalasTech.app.core.security import rate_limiter
 from SalasTech.app.core.security import csrf
+
+# Importações de tratamento de exceções
 from SalasTech.app.exceptions import handler
 
-# Configure logging
+# Configuração do sistema de logs
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("logs/salastech.log", encoding='utf-8'),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 
-def custom_openapi():
+def esquema_openapi_personalizado():
     """
-    Customiza a documentação OpenAPI com informações específicas do projeto.
-    Inclui descrições detalhadas, termos de serviço e informações de contato.
+    Personaliza a documentação OpenAPI com informações específicas do projeto.
+    
+    Esta função cria um esquema OpenAPI customizado que inclui:
+    - Informações detalhadas sobre a API
+    - Termos de serviço e informações de contato
+    - Tags organizacionais para os endpoints
+    - Descrições das funcionalidades principais
+    
+    Returns:
+        dict: Esquema OpenAPI personalizado
     """
     if app.openapi_schema:
         return app.openapi_schema
     
     openapi_schema = get_openapi(
-        title="TechSalas API",
+        title="SalasTech API - Sistema de Gerenciamento de Salas IFAM",
         version="1.0.0",
         description="""
-        Sistema de Gerenciamento de Salas API .
+        ## Sistema de Gerenciamento de Salas - Instituto Federal do Amazonas
         
-        ## Funcionalidades
+        API RESTful completa para o gerenciamento de salas e reservas do IFAM.
+        Desenvolvida com FastAPI, oferece alta performance e documentação automática.
         
-        * Autenticação e Autorização
-        * Gerenciamento de Usuários
-        * Gerenciamento de Salas
-        * Reservas de Salas
-        * Gerenciamento de Departamentos
-        * Geração de Relatórios
+        ### Funcionalidades Principais
         
-        ## Autenticação
+        * **Autenticação e Autorização**: Sistema JWT com controle de acesso baseado em papéis
+        * **Gerenciamento de Usuários**: CRUD completo para usuários do sistema
+        * **Administração de Salas**: Controle de salas, capacidades e recursos disponíveis
+        * **Sistema de Reservas**: Agendamento inteligente com validação de conflitos
+        * **Gestão de Departamentos**: Organização hierárquica dos departamentos
+        * **Relatórios Avançados**: Geração de relatórios em múltiplos formatos
+        
+        ### Autenticação
         
         A API utiliza autenticação JWT (JSON Web Token). Para acessar endpoints protegidos:
+        
         1. Faça login através do endpoint `/api/auth/login`
-        2. Use o token retornado no header `Authorization: Bearer <token>`
+        2. Use o token retornado no header `Authorization: Bearer <seu_token>`
+        3. O token é válido por 24 horas por padrão
+        
+        ### Códigos de Status HTTP
+        
+        * `200` - Sucesso
+        * `201` - Criado com sucesso
+        * `400` - Erro na requisição (dados inválidos)
+        * `401` - Não autorizado (token inválido/expirado)
+        * `403` - Acesso negado (permissões insuficientes)
+        * `404` - Recurso não encontrado
+        * `409` - Conflito (dados duplicados)
+        * `422` - Erro de validação
+        * `500` - Erro interno do servidor
         """,
         routes=app.routes,
-        terms_of_service="http://ifam.edu.br/terms/",
+        terms_of_service="https://portal.ifam.edu.br/termos-de-uso/",
         contact={
-            "name": "Suporte IFAM",
-            "url": "http://ifam.edu.br/support",
-            "email": "suporte@ifam.edu.br",
+            "name": "Suporte Técnico IFAM - SalasTech",
+            "url": "https://portal.ifam.edu.br/suporte",
+            "email": "salastech@ifam.edu.br",
         },
         license_info={
             "name": "Apache 2.0",
@@ -70,103 +124,120 @@ def custom_openapi():
         },
     )
     
-    # Adiciona tags com descrições para melhor organização
+    # Adiciona tags organizacionais com descrições detalhadas para melhor navegação na documentação
     openapi_schema["tags"] = [
         {
             "name": "Autenticação",
-            "description": "Operações relacionadas à autenticação e autorização",
+            "description": "Operações de login, logout e gerenciamento de tokens JWT. "
+                          "Inclui endpoints para autenticação, renovação de tokens e validação de permissões.",
         },
         {
             "name": "Usuários",
-            "description": "Gerenciamento de usuários do sistema",
+            "description": "Gerenciamento completo de usuários do sistema. "
+                          "Inclui operações CRUD, controle de papéis e gerenciamento de perfis.",
         },
         {
             "name": "Salas",
-            "description": "Operações de gerenciamento de salas",
+            "description": "Administração de salas e seus recursos. "
+                          "Controle de capacidade, equipamentos disponíveis e status das salas.",
         },
         {
             "name": "Reservas",
-            "description": "Agendamento e gerenciamento de reservas",
+            "description": "Sistema de agendamento e gerenciamento de reservas. "
+                          "Inclui validação de conflitos, aprovações e cancelamentos.",
         },
         {
             "name": "Departamentos",
-            "description": "Gerenciamento de departamentos",
+            "description": "Gestão organizacional dos departamentos. "
+                          "Controle hierárquico e atribuição de responsabilidades.",
         },
         {
             "name": "Relatórios",
-            "description": "Geração e download de relatórios",
+            "description": "Geração de relatórios analíticos e estatísticos. "
+                          "Exportação em múltiplos formatos (PDF, Excel, CSV).",
         },
     ]
     
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
-# Configuração principal do FastAPI
+
+# Configuração principal da aplicação FastAPI
 app = FastAPI(
-    title="IFAM Sistema de Gerenciamento",
-    description="API para o Sistema de Gerenciamento de Salas do IFAM",
+    title="SalasTech - Sistema de Gerenciamento de Salas IFAM",
+    description="API para o Sistema de Gerenciamento de Salas do Instituto Federal do Amazonas",
     version="1.0.0",
     lifespan=lifespan.lifespan,
-    docs_url=None,  # Desabilita o Swagger UI padrão
-    redoc_url=None  # Desabilita o ReDoc padrão
+    docs_url=None,  # Desabilita o Swagger UI padrão para usar versão customizada
+    redoc_url=None  # Desabilita o ReDoc padrão para usar versão customizada
 )
 
-# Configuração da API
+# Configuração da sub-aplicação API
 api = FastAPI(
-    title="IFAM API",
-    description="API para o Sistema de Gerenciamento de Salas do IFAM",
+    title="SalasTech API",
+    description="Endpoints da API do Sistema de Gerenciamento de Salas do IFAM",
     version="1.0.0",
     lifespan=lifespan.lifespan,
-    openapi_tags=[{
-        "name": tag["name"],
-        "description": tag["description"]
-    } for tag in custom_openapi()["tags"]]
 )
 
-# Endpoints para documentação customizada
+# Endpoints personalizados para documentação
 @app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
+async def interface_swagger_personalizada():
     """
-    Endpoint que serve a interface Swagger UI customizada
+    Endpoint que serve a interface Swagger UI customizada.
+    
+    Fornece uma versão personalizada do Swagger UI com:
+    - Tema e cores do IFAM
+    - Links para recursos externos
+    - Favicon personalizado
+    
+    Returns:
+        HTMLResponse: Interface Swagger UI customizada
     """
     return get_swagger_ui_html(
         openapi_url="/api/openapi.json",
-        title="IFAM Sistema de Gerenciamento - API Documentation",
+        title="SalasTech - Documentação da API",
         swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
         swagger_favicon_url="/static/favicon.ico"
     )
 
+
 @app.get("/redoc", include_in_schema=False)
-async def redoc_html():
+async def interface_redoc():
     """
-    Endpoint que serve a interface ReDoc
+    Endpoint que serve a interface ReDoc alternativa.
+    
+    Fornece uma interface de documentação alternativa ao Swagger UI,
+    com foco em legibilidade e organização hierárquica dos endpoints.
+    
+    Returns:
+        HTMLResponse: Interface ReDoc personalizada
     """
     return get_redoc_html(
         openapi_url="/api/openapi.json",
-        title="IFAM Sistema de Gerenciamento - ReDoc",
+        title="SalasTech - Documentação ReDoc",
         redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js",
     )
 
-# Configuração dos handlers de exceção
-handler.add_html(app)
-handler.add_json(api)
 
-# Configuração de middlewares de segurança
-static_middleware.add(app)  # Arquivos estáticos
-cors_middleware.add(app)    # Proteção CORS para app principal
-cors_middleware.add(api)    # Proteção CORS para API
-rate_limiter.apply_rate_limiting(app)  # Rate limiting
-csrf.apply_csrf_middleware(app)  # Proteção CSRF
+# Configuração dos manipuladores de exceção
+handler.add_html(app)  # Manipulador de exceções para respostas HTML
+handler.add_json(api)  # Manipulador de exceções para respostas JSON da API
 
-# Log de inicialização
-logger.info("Starting IFAM Sistema de Gerenciamento with enhanced security features")
-logger.info("Applied security: CORS, Rate Limiting, CSRF Protection, Secure Cookies")
+# Aplicação de middlewares de segurança (ordem é importante!)
+static_middleware.add(app)              # Middleware para servir arquivos estáticos
+cors_middleware.add(app)                # Proteção CORS para aplicação principal
+cors_middleware.add(api)                # Proteção CORS para API
+rate_limiter.apply_rate_limiting(app)   # Limitação de taxa de requisições
+csrf.apply_csrf_middleware(app)         # Proteção contra ataques CSRF
 
-# Registro dos routers de páginas
-app.include_router(page_controller.router)
+# Log de inicialização com informações de segurança
+logger.info("Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM")
+logger.info("Segurança aplicada: CORS, Rate Limiting, CSRF Protection, Cookies Seguros")
+logger.info("Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)")
 
-# Registro dos routers da API com tags apropriadas
+# Registro dos routers da API com prefixos e tags apropriadas
 api.include_router(
     auth_controller.router,
     prefix="/auth",
@@ -198,8 +269,13 @@ api.include_router(
     tags=["Relatórios"]
 )
 
-# Montagem da API
+# Montagem da API como sub-aplicação
 app.mount("/api", api)
 
-# Configuração do schema OpenAPI customizado
-app.openapi = custom_openapi
+# Configuração do esquema OpenAPI personalizado
+app.openapi = esquema_openapi_personalizado
+
+# Log de conclusão da inicialização
+logger.info("Aplicação SalasTech iniciada com sucesso!")
+logger.info("Endpoints da API disponíveis em: /api/")
+logger.info("Health check disponível em: /api/health")

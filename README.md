@@ -39,41 +39,42 @@ A documentação completa está disponível no diretório `docs/`:
 ## Instalação Rápida
 
 1. Clone o repositório:
+
    ```bash
-   git clone https://github.com/seu-usuario/SalsTech-backend.git
+   git clone https://github.com/jpedrops092/SalsTech-backend.git
    cd SalsTech-backend
    ```
-
 2. Crie e ative um ambiente virtual:
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # Linux/macOS
    venv\Scripts\activate     # Windows
    ```
-
 3. Instale as dependências:
+
    ```bash
    pip install -e .
    ```
-
 4. Configure o ambiente:
+
    ```bash
    cp .env.example .env
    # Edite o arquivo .env com suas configurações
    ```
-
 5. Inicialize o banco de dados:
+
    ```bash
    cd src/SalasTech/app
    python db_init.py
    ```
-
 6. Inicie o servidor:
+
    ```bash
    uvicorn main:app --reload
    ```
-
 7. Acesse a aplicação:
+
    - Interface Web: http://localhost:8000
    - API: http://localhost:8000/api
    - Documentação da API: http://localhost:8000/api/docs

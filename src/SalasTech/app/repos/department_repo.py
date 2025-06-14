@@ -1,37 +1,37 @@
-from SalasTech.app.models.db import DepartmentDb
+from SalasTech.app.models.db import DepartamentoDb
 from SalasTech.app.core.db_context import session_maker
 
 
-def add(department: DepartmentDb) -> DepartmentDb:
+def add(department: DepartamentoDb) -> DepartamentoDb:
     with session_maker.begin() as session:
         session.add(department)
         return department
 
-def update(department: DepartmentDb) -> None:
+def update(department: DepartamentoDb) -> None:
     with session_maker.begin() as session:
-        session.query(DepartmentDb).filter(DepartmentDb.id == department.id).update({
-            DepartmentDb.name: department.name,
-            DepartmentDb.code: department.code,
-            DepartmentDb.description: department.description,
-            DepartmentDb.manager_id: department.manager_id
+        session.query(DepartamentoDb).filter(DepartamentoDb.id == department.id).update({
+            DepartamentoDb.name: department.name,
+            DepartamentoDb.code: department.code,
+            DepartamentoDb.description: department.description,
+            DepartamentoDb.manager_id: department.manager_id
         })
 
 def delete(id: int) -> None:
     with session_maker.begin() as session:
-        session.query(DepartmentDb).filter(DepartmentDb.id == id).delete()
+        session.query(DepartamentoDb).filter(DepartamentoDb.id == id).delete()
 
-def get(limit: int = 1000, offset: int = 0) -> list[DepartmentDb]:
+def get(limit: int = 1000, offset: int = 0) -> list[DepartamentoDb]:
     with session_maker() as session:
-        return session.query(DepartmentDb).limit(limit).offset(offset).all()
+        return session.query(DepartamentoDb).limit(limit).offset(offset).all()
 
-def get_by_id(id: int) -> DepartmentDb | None:
+def get_by_id(id: int) -> DepartamentoDb | None:
     with session_maker() as session:
-        return session.query(DepartmentDb).where(
-            DepartmentDb.id == id
+        return session.query(DepartamentoDb).where(
+            DepartamentoDb.id == id
         ).first()
 
-def get_by_code(code: str) -> DepartmentDb | None:
+def get_by_code(code: str) -> DepartamentoDb | None:
     with session_maker() as session:
-        return session.query(DepartmentDb).where(
-            DepartmentDb.code == code
+        return session.query(DepartamentoDb).where(
+            DepartamentoDb.code == code
         ).first()

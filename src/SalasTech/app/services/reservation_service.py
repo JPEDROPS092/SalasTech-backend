@@ -1,3 +1,9 @@
+"""
+Serviço de gerenciamento de reservas.
+
+Este módulo contém toda a lógica de negócio relacionada ao gerenciamento de reservas,
+incluindo criação, atualização, cancelamento, aprovação e validação de regras de negócio.
+"""
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
@@ -17,9 +23,21 @@ def get_all(limit: int = 1000, offset: int = 0,
            room_id: Optional[int] = None,
            user_id: Optional[int] = None,
            start_date: Optional[datetime] = None,
-           end_date: Optional[datetime] = None) -> List[dto.ReservationResponse]:
+           end_date: Optional[datetime] = None) -> List[dto.ReservaRespostaDTO]:
     """
-    Retorna todas as reservas com filtros opcionais
+    Retorna todas as reservas com filtros opcionais.
+    
+    Args:
+        limit: Número máximo de reservas a retornar
+        offset: Deslocamento para paginação
+        status: Filtrar por status da reserva
+        room_id: Filtrar por ID da sala
+        user_id: Filtrar por ID do usuário
+        start_date: Filtrar reservas que começam após esta data
+        end_date: Filtrar reservas que terminam antes desta data
+    
+    Returns:
+        Lista de reservas que atendem aos critérios especificados
     """
     reservations = reservation_repo.get_all(
         limit=limit, 
@@ -33,7 +51,7 @@ def get_all(limit: int = 1000, offset: int = 0,
     return [_db_to_response(reservation) for reservation in reservations]
 
 
-def get_by_id(id: int) -> dto.ReservationResponse:
+def get_by_id(id: int) -> dto.ReservaRespostaDTO:
     """
     Busca uma reserva pelo ID
     """
@@ -45,7 +63,7 @@ def get_by_id(id: int) -> dto.ReservationResponse:
 
 
 def get_by_user(user_id: int, limit: int = 1000, offset: int = 0,
-               status: Optional[enums.ReservationStatus] = None) -> List[dto.ReservationResponse]:
+               status: Optional[enums.ReservationStatus] = None) -> List[dto.ReservaRespostaDTO]:
     """
     Retorna reservas de um usuário específico
     """
@@ -59,7 +77,7 @@ def get_by_user(user_id: int, limit: int = 1000, offset: int = 0,
 
 
 def get_by_room(room_id: int, limit: int = 1000, offset: int = 0,
-               status: Optional[enums.ReservationStatus] = None) -> List[dto.ReservationResponse]:
+               status: Optional[enums.ReservationStatus] = None) -> List[dto.ReservaRespostaDTO]:
     """
     Retorna reservas de uma sala específica
     """
@@ -72,7 +90,7 @@ def get_by_room(room_id: int, limit: int = 1000, offset: int = 0,
     return [_db_to_response(reservation) for reservation in reservations]
 
 
-def create_reservation(user_id: int, obj: dto.ReservationCreate) -> dto.ReservationResponse:
+def create_reservation(user_id: int, obj: dto.ReservaCriarDTO) -> dto.ReservaRespostaDTO:
     """
     Cria uma nova reserva com todas as validações de regras de negócio
     """
@@ -82,34 +100,34 @@ def create_reservation(user_id: int, obj: dto.ReservationCreate) -> dto.Reservat
         raise AppException(message="Usuário não encontrado", status_code=404)
     
     # Verificar se a sala existe
-    room = room_repo.get_by_id(obj.room_id)
+    room = room_repo.get_by_id(obj.sala_id)
     if room is None:
         raise AppException(message="Sala não encontrada", status_code=404)
     
     # Validar datas e regras de negócio
-    validate_reservation_rules(obj.start_datetime, obj.end_datetime, user, room)
+    validate_reservation_rules(obj.inicio_data_hora, obj.fim_data_hora, user, room)
     
     # Verificar disponibilidade da sala
-    is_available, conflicts = room_repo.check_availability(obj.room_id, obj.start_datetime, obj.end_datetime)
+    is_available, conflicts = room_repo.check_availability(obj.sala_id, obj.inicio_data_hora, obj.fim_data_hora)
     if not is_available:
         raise AppException(message="Sala não está disponível no período solicitado", status_code=422)
     
     # Criar a reserva
-    reservation = db.ReservationDb()
-    reservation.room_id = obj.room_id
-    reservation.user_id = user_id
-    reservation.title = obj.title
-    reservation.description = obj.description
-    reservation.start_datetime = obj.start_datetime
-    reservation.end_datetime = obj.end_datetime
+    reservation = db.ReservaDb()
+    reservation.sala_id = obj.sala_id
+    reservation.usuario_id = user_id
+    reservation.titulo = obj.titulo
+    reservation.descricao = obj.descricao
+    reservation.inicio_data_hora = obj.inicio_data_hora
+    reservation.fim_data_hora = obj.fim_data_hora
     
     # Definir status inicial (pendente ou confirmada)
-    reservation.status = _determine_initial_status(user, room, obj.start_datetime, obj.end_datetime)
+    reservation.status = _determine_initial_status(user, room, obj.inicio_data_hora, obj.fim_data_hora)
     
     # Se for aprovação automática, definir aprovador como o próprio usuário
     if reservation.status == enums.ReservationStatus.CONFIRMADA:
-        reservation.approved_by = user_id
-        reservation.approved_at = datetime.now(timezone.utc)
+        reservation.aprovado_por = user_id
+        reservation.aprovado_em = datetime.now(timezone.utc)
     
     created_reservation = reservation_repo.add(reservation)
     
@@ -119,7 +137,7 @@ def create_reservation(user_id: int, obj: dto.ReservationCreate) -> dto.Reservat
     return _db_to_response(created_reservation)
 
 
-def update_reservation(id: int, user_id: int, obj: dto.ReservationUpdate) -> dto.ReservationResponse:
+def update_reservation(id: int, user_id: int, obj: dto.ReservaAtualizarDTO) -> dto.ReservaRespostaDTO:
     """
     Atualiza uma reserva existente
     """
@@ -137,20 +155,20 @@ def update_reservation(id: int, user_id: int, obj: dto.ReservationUpdate) -> dto
         raise AppException(message="Você não tem permissão para atualizar esta reserva", status_code=403)
     
     # Verificar se a reserva já foi finalizada ou cancelada
-    if reservation.status in [enums.ReservationStatus.FINALIZADA, enums.ReservationStatus.CANCELADA]:
+    if reservation.status in [enums.ReservationStatus.CONCLUIDA, enums.ReservationStatus.CANCELADA]:
         raise AppException(message=f"Não é possível atualizar uma reserva com status {reservation.status}", status_code=422)
     
     # Atualizar apenas os campos fornecidos
-    if obj.title is not None:
-        reservation.title = obj.title
+    if obj.titulo is not None:
+        reservation.titulo = obj.titulo
     
-    if obj.description is not None:
-        reservation.description = obj.description
+    if obj.descricao is not None:
+        reservation.descricao = obj.descricao
     
     # Se houver alteração de datas, validar regras e disponibilidade
-    if obj.start_datetime is not None or obj.end_datetime is not None:
-        start_datetime = obj.start_datetime if obj.start_datetime is not None else reservation.start_datetime
-        end_datetime = obj.end_datetime if obj.end_datetime is not None else reservation.end_datetime
+    if obj.inicio_data_hora is not None or obj.fim_data_hora is not None:
+        start_datetime = obj.inicio_data_hora if obj.inicio_data_hora is not None else reservation.inicio_data_hora
+        end_datetime = obj.fim_data_hora if obj.fim_data_hora is not None else reservation.fim_data_hora
         
         # Validar datas
         if end_datetime <= start_datetime:
@@ -171,27 +189,27 @@ def update_reservation(id: int, user_id: int, obj: dto.ReservationUpdate) -> dto
         if conflicts:
             raise AppException(message="Sala não está disponível no período solicitado", status_code=422)
         
-        reservation.start_datetime = start_datetime
-        reservation.end_datetime = end_datetime
+        reservation.inicio_data_hora = start_datetime
+        reservation.fim_data_hora = end_datetime
         
         # Alterações de data retornam o status para pendente (exceto para administradores)
         if user.role not in [enums.UserRole.ADMIN, enums.UserRole.ADMINISTRADOR, enums.UserRole.GESTOR]:
             reservation.status = enums.ReservationStatus.PENDENTE
-            reservation.approved_by = None
-            reservation.approved_at = None
+            reservation.aprovado_por = None
+            reservation.aprovado_em = None
     
     # Atualizar status, se fornecido (apenas administradores)
     if obj.status is not None and user.role in [enums.UserRole.ADMIN, enums.UserRole.ADMINISTRADOR, enums.UserRole.GESTOR]:
         reservation.status = obj.status
         
         # Se estiver aprovando, registrar aprovador
-        if obj.status == enums.ReservationStatus.CONFIRMADA and reservation.approved_by is None:
-            reservation.approved_by = user_id
-            reservation.approved_at = datetime.now(timezone.utc)
+        if obj.status == enums.ReservationStatus.CONFIRMADA and reservation.aprovado_por is None:
+            reservation.aprovado_por = user_id
+            reservation.aprovado_em = datetime.now(timezone.utc)
     
     # Atualizar motivo de cancelamento, se fornecido
-    if obj.cancellation_reason is not None:
-        reservation.cancellation_reason = obj.cancellation_reason
+    if obj.motivo_cancelamento is not None:
+        reservation.motivo_cancelamento = obj.motivo_cancelamento
     
     reservation_repo.update(reservation)
     
@@ -204,7 +222,7 @@ def update_reservation(id: int, user_id: int, obj: dto.ReservationUpdate) -> dto
     return _db_to_response(updated_reservation)
 
 
-def cancel_reservation(id: int, user_id: int, reason: str) -> dto.ReservationResponse:
+def cancel_reservation(id: int, user_id: int, reason: str) -> dto.ReservaRespostaDTO:
     """
     Cancela uma reserva
     """
@@ -224,16 +242,16 @@ def cancel_reservation(id: int, user_id: int, reason: str) -> dto.ReservationRes
         raise AppException(message="Você não tem permissão para cancelar esta reserva", status_code=403)
     
     # Verificar se a reserva já foi finalizada ou cancelada
-    if reservation.status in [enums.ReservationStatus.FINALIZADA, enums.ReservationStatus.CANCELADA]:
+    if reservation.status in [enums.ReservationStatus.CONCLUIDA, enums.ReservationStatus.CANCELADA]:
         raise AppException(message=f"Não é possível cancelar uma reserva com status {reservation.status}", status_code=422)
     
     # Verificar regras de cancelamento (prazo)
     now = datetime.now(timezone.utc)
     
     # Usuários comuns só podem cancelar até 2 horas antes do início
-    if not is_admin and reservation.start_datetime <= now + timedelta(hours=2):
+    if not is_admin and reservation.inicio_data_hora <= now + timedelta(hours=2):
         # Se a reserva já começou, exigir justificativa
-        if reservation.start_datetime <= now:
+        if reservation.inicio_data_hora <= now:
             if not reason:
                 raise AppException(message="É necessário fornecer um motivo para cancelar uma reserva em andamento", status_code=422)
         else:
@@ -241,7 +259,7 @@ def cancel_reservation(id: int, user_id: int, reason: str) -> dto.ReservationRes
     
     # Cancelar a reserva
     reservation.status = enums.ReservationStatus.CANCELADA
-    reservation.cancellation_reason = reason
+    reservation.motivo_cancelamento = reason
     
     reservation_repo.update(reservation)
     
@@ -254,7 +272,7 @@ def cancel_reservation(id: int, user_id: int, reason: str) -> dto.ReservationRes
     return _db_to_response(updated_reservation)
 
 
-def approve_reservation(id: int, approver_id: int) -> dto.ReservationResponse:
+def approve_reservation(id: int, approver_id: int) -> dto.ReservaRespostaDTO:
     """
     Aprova uma reserva pendente
     """
@@ -277,9 +295,9 @@ def approve_reservation(id: int, approver_id: int) -> dto.ReservationResponse:
     
     # Verificar se a sala ainda está disponível
     is_available, conflicts = room_repo.check_availability(
-        reservation.room_id, 
-        reservation.start_datetime, 
-        reservation.end_datetime
+        reservation.sala_id, 
+        reservation.inicio_data_hora, 
+        reservation.fim_data_hora
     )
     
     if not is_available:
@@ -290,8 +308,8 @@ def approve_reservation(id: int, approver_id: int) -> dto.ReservationResponse:
     
     # Aprovar a reserva
     reservation.status = enums.ReservationStatus.CONFIRMADA
-    reservation.approved_by = approver_id
-    reservation.approved_at = datetime.now(timezone.utc)
+    reservation.aprovado_por = approver_id
+    reservation.aprovado_em = datetime.now(timezone.utc)
     
     reservation_repo.update(reservation)
     
@@ -304,7 +322,7 @@ def approve_reservation(id: int, approver_id: int) -> dto.ReservationResponse:
     return _db_to_response(updated_reservation)
 
 
-def reject_reservation(id: int, approver_id: int, reason: str) -> dto.ReservationResponse:
+def reject_reservation(id: int, approver_id: int, reason: str) -> dto.ReservaRespostaDTO:
     """
     Rejeita uma reserva pendente
     """
@@ -331,7 +349,7 @@ def reject_reservation(id: int, approver_id: int, reason: str) -> dto.Reservatio
     
     # Rejeitar a reserva (cancelar)
     reservation.status = enums.ReservationStatus.CANCELADA
-    reservation.cancellation_reason = reason
+    reservation.motivo_cancelamento = reason
     
     reservation_repo.update(reservation)
     
@@ -345,7 +363,7 @@ def reject_reservation(id: int, approver_id: int, reason: str) -> dto.Reservatio
 
 
 def get_pending_approvals(limit: int = 1000, offset: int = 0, 
-                         department_id: Optional[int] = None) -> List[dto.ReservationResponse]:
+                         department_id: Optional[int] = None) -> List[dto.ReservaRespostaDTO]:
     """
     Retorna reservas pendentes de aprovação
     """
@@ -355,7 +373,7 @@ def get_pending_approvals(limit: int = 1000, offset: int = 0,
 
 def get_upcoming_reservations(user_id: Optional[int] = None, 
                              limit: int = 10, 
-                             hours_ahead: int = 24) -> List[dto.ReservationResponse]:
+                             hours_ahead: int = 24) -> List[dto.ReservaRespostaDTO]:
     """
     Retorna próximas reservas
     """
@@ -363,7 +381,7 @@ def get_upcoming_reservations(user_id: Optional[int] = None,
     return [_db_to_response(reservation) for reservation in reservations]
 
 
-def auto_approve_reservations() -> int:
+def aprovar_reservas_automaticamente() -> int:
     """
     Aprova automaticamente reservas pendentes após 24 horas
     Retorna o número de reservas aprovadas
@@ -379,7 +397,7 @@ def update_reservation_statuses() -> None:
 
 
 def validate_reservation_rules(start_datetime: datetime, end_datetime: datetime, 
-                              user: db.UserDb, room: db.RoomDb) -> None:
+                              user: db.UsuarioDb, room: db.SalaDb) -> None:
     """
     Valida todas as regras de negócio para reservas
     """
@@ -442,7 +460,7 @@ def validate_reservation_rules(start_datetime: datetime, end_datetime: datetime,
         raise AppException(message="Não há funcionamento aos Domingos", status_code=422)
 
 
-def _determine_initial_status(user: db.UserDb, room: db.RoomDb, 
+def _determine_initial_status(user: db.UsuarioDb, room: db.SalaDb, 
                              start_datetime: datetime, 
                              end_datetime: datetime) -> enums.ReservationStatus:
     """
@@ -465,22 +483,22 @@ def _determine_initial_status(user: db.UserDb, room: db.RoomDb,
     return enums.ReservationStatus.PENDENTE
 
 
-def _db_to_response(reservation: db.ReservationDb) -> dto.ReservationResponse:
+def _db_to_response(reservation: db.ReservaDb) -> dto.ReservaRespostaDTO:
     """
-    Converte um objeto ReservationDb para ReservationResponse
+    Converte um objeto ReservaDb para ReservaRespostaDTO
     """
-    return dto.ReservationResponse(
+    return dto.ReservaRespostaDTO(
         id=reservation.id,
-        room_id=reservation.room_id,
-        user_id=reservation.user_id,
-        title=reservation.title,
-        description=reservation.description,
-        start_datetime=reservation.start_datetime,
-        end_datetime=reservation.end_datetime,
+        sala_id=reservation.sala_id,
+        usuario_id=reservation.usuario_id,
+        titulo=reservation.titulo,
+        descricao=reservation.descricao,
+        inicio_data_hora=reservation.inicio_data_hora,
+        fim_data_hora=reservation.fim_data_hora,
         status=reservation.status,
-        approved_by=reservation.approved_by,
-        approved_at=reservation.approved_at,
-        cancellation_reason=reservation.cancellation_reason,
-        created_at=reservation.created_at,
-        updated_at=reservation.updated_at
+        aprovado_por=reservation.aprovado_por,
+        aprovado_em=reservation.aprovado_em,
+        motivo_cancelamento=reservation.motivo_cancelamento,
+        criado_em=reservation.criado_em,
+        atualizado_em=reservation.atualizado_em
     )

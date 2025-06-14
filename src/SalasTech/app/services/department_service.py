@@ -8,7 +8,7 @@ from SalasTech.app.utils import formatting
 from SalasTech.app.exceptions.scheme import AppException
 
 
-def get_all(limit: int = 1000, offset: int = 0) -> list[dto.DepartmentResponse]:
+def get_all(limit: int = 1000, offset: int = 0) -> list[dto.DepartamentoRespostaDTO]:
     """
     Retorna todos os departamentos
     """
@@ -16,7 +16,7 @@ def get_all(limit: int = 1000, offset: int = 0) -> list[dto.DepartmentResponse]:
     return [_db_to_response(dept) for dept in departments]
 
 
-def get_by_id(id: int) -> dto.DepartmentResponse:
+def get_by_id(id: int) -> dto.DepartamentoRespostaDTO:
     """
     Busca um departamento pelo ID
     """
@@ -27,7 +27,7 @@ def get_by_id(id: int) -> dto.DepartmentResponse:
     return _db_to_response(department)
 
 
-def get_by_code(code: str) -> dto.DepartmentResponse:
+def get_by_code(code: str) -> dto.DepartamentoRespostaDTO:
     """
     Busca um departamento pelo código
     """
@@ -39,13 +39,13 @@ def get_by_code(code: str) -> dto.DepartmentResponse:
     return _db_to_response(department)
 
 
-def create_department(obj: dto.DepartmentCreate) -> dto.DepartmentResponse:
+def create_department(obj: dto.DepartamentoCriarDTO) -> dto.DepartamentoRespostaDTO:
     """
     Cria um novo departamento
     """
     # Formatar e validar dados
-    name_formatted = formatting.format_string(obj.name)
-    code_formatted = formatting.format_string(obj.code)
+    name_formatted = formatting.format_string(obj.nome)
+    code_formatted = formatting.format_string(obj.codigo)
     
     if name_formatted == "":
         raise AppException(message="Nome é obrigatório", status_code=422)
@@ -59,23 +59,23 @@ def create_department(obj: dto.DepartmentCreate) -> dto.DepartmentResponse:
         raise AppException(message="Já existe um departamento com este código", status_code=422)
     
     # Verificar se o gerente existe, se informado
-    if obj.manager_id:
-        manager = user_repo.get_by_id(obj.manager_id)
+    if obj.gerente_id:
+        manager = user_repo.get_by_id(obj.gerente_id)
         if manager is None:
             raise AppException(message="Gerente não encontrado", status_code=422)
     
     # Criar o departamento
-    department = db.DepartmentDb()
+    department = db.DepartamentoDb()
     department.name = name_formatted
     department.code = code_formatted
-    department.description = obj.description
-    department.manager_id = obj.manager_id
+    department.description = obj.descricao
+    department.manager_id = obj.gerente_id
     
     created_department = department_repo.add(department)
     return _db_to_response(created_department)
 
 
-def update_department(id: int, obj: dto.DepartmentCreate) -> dto.DepartmentResponse:
+def update_department(id: int, obj: dto.DepartamentoCriarDTO) -> dto.DepartamentoRespostaDTO:
     """
     Atualiza um departamento existente
     """
@@ -85,8 +85,8 @@ def update_department(id: int, obj: dto.DepartmentCreate) -> dto.DepartmentRespo
         raise AppException(message="Departamento não encontrado", status_code=404)
     
     # Formatar e validar dados
-    name_formatted = formatting.format_string(obj.name)
-    code_formatted = formatting.format_string(obj.code)
+    name_formatted = formatting.format_string(obj.nome)
+    code_formatted = formatting.format_string(obj.codigo)
     
     if name_formatted == "":
         raise AppException(message="Nome é obrigatório", status_code=422)
@@ -100,16 +100,16 @@ def update_department(id: int, obj: dto.DepartmentCreate) -> dto.DepartmentRespo
         raise AppException(message="Já existe um departamento com este código", status_code=422)
     
     # Verificar se o gerente existe, se informado
-    if obj.manager_id:
-        manager = user_repo.get_by_id(obj.manager_id)
+    if obj.gerente_id:
+        manager = user_repo.get_by_id(obj.gerente_id)
         if manager is None:
             raise AppException(message="Gerente não encontrado", status_code=422)
     
     # Atualizar o departamento
     department.name = name_formatted
     department.code = code_formatted
-    department.description = obj.description
-    department.manager_id = obj.manager_id
+    department.description = obj.descricao
+    department.manager_id = obj.gerente_id
     
     department_repo.update(department)
     return _db_to_response(department)
@@ -135,7 +135,7 @@ def delete_department(id: int) -> None:
         raise AppException(message="Não é possível excluir o departamento. Existem usuários ou salas vinculados a ele.", status_code=422)
 
 
-def assign_manager(department_id: int, manager_id: int) -> dto.DepartmentResponse:
+def assign_manager(department_id: int, manager_id: int) -> dto.DepartamentoRespostaDTO:
     """
     Atribui um gerente a um departamento
     """
@@ -181,16 +181,16 @@ def get_department_stats(department_id: int) -> dict:
     }
 
 
-def _db_to_response(department: db.DepartmentDb) -> dto.DepartmentResponse:
+def _db_to_response(department: db.DepartamentoDb) -> dto.DepartamentoRespostaDTO:
     """
-    Converte um objeto DepartmentDb para DepartmentResponse
+    Converte um objeto DepartmentDb para DepartamentoRespostaDTO
     """
-    return dto.DepartmentResponse(
+    return dto.DepartamentoRespostaDTO(
         id=department.id,
-        name=department.name,
-        code=department.code,
-        description=department.description,
-        manager_id=department.manager_id,
-        created_at=department.created_at,
-        updated_at=department.updated_at
+        nome=department.name,
+        codigo=department.code,
+        descricao=department.description,
+        gerente_id=department.manager_id,
+        criado_em=department.created_at,
+        atualizado_em=department.updated_at
     )
