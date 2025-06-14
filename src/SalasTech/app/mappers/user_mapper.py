@@ -2,14 +2,14 @@ from SalasTech.app.models import db
 from SalasTech.app.models import dto
 
 
-def db_to_get_dto(user_db: db.UserDb) -> dto.UserDTO:
+def db_to_get_dto(user_db: db.UsuarioDb) -> dto.UsuarioDTO:
     """Convert a User DB object to a GetUser DTO"""
-    return dto.UserDTO(
+    return dto.UsuarioDTO(
         id=user_db.id,
-        name=user_db.name,
-        surname=user_db.surname,
-        role=user_db.role,
+        nome=user_db.name,
+        sobrenome=user_db.surname,
+        papel=user_db.role,
         email=user_db.email,
-        updated_at=user_db.updated_at,
-        created_at=user_db.created_at
+        atualizado_em=user_db.updated_at,
+        criado_em=user_db.created_at
     )

@@ -76,10 +76,6 @@ class DepartamentoDb(Base):
     # Índices Adicionais para a tabela
     __table_args__ = (
         Index('ix_departamentos_nome', 'nome'),
-        """
-        Índice para a coluna 'nome'.
-        Acelera buscas e ordenações baseadas no nome do departamento.
-        """
     )
 
     # Relacionamentos ORM
@@ -170,11 +166,7 @@ class UsuarioDb(Base): # Alterado de 'UserDb' para 'UsuarioDb'
 
     # Índices Adicionais para a tabela
     __table_args__ = (
-        Index('ix_usuarios_nome_sobrenome', 'nome', 'sobrenome'), # Alterado de 'ix_users_name_surname', 'name', 'surname'
-        """
-        Índice composto para 'nome' e 'sobrenome'.
-        Acelera buscas por usuários usando seus nomes e sobrenomes combinados.
-        """
+        Index('ix_usuarios_nome_sobrenome', 'nome', 'sobrenome'),
     )
 
     # Relacionamentos ORM
@@ -276,18 +268,8 @@ class SalaDb(Base):
 
     # Índices para consultas combinadas
     __table_args__ = (
-        Index('ix_salas_predio_andar', 'predio', 'andar'), # Alterado de 'ix_rooms_building_floor', 'building', 'floor'
-        """
-        Índice composto para 'predio' e 'andar'.
-        Muito eficiente para consultas que buscam salas em uma localização específica
-        (ex: todas as salas do Edifício A, andar 3).
-        """,
-        Index('ix_salas_capacidade_status', 'capacidade', 'status'), # Alterado de 'ix_rooms_capacity_status', 'capacity', 'status'
-        """
-        Índice composto para 'capacidade' e 'status'.
-        Otimiza buscas por salas que atendem a uma certa capacidade e estão em um determinado status
-        (ex: salas ativas com capacidade para mais de 10 pessoas).
-        """
+        Index('ix_salas_predio_andar', 'predio', 'andar'),
+        Index('ix_salas_capacidade_status', 'capacidade', 'status'),
     )
 
     # Relacionamentos ORM
@@ -457,23 +439,9 @@ class ReservaDb(Base): # Alterado de 'ReservationDb' para 'ReservaDb'
 
     # Índices para consultas combinadas
     __table_args__ = (
-        Index('ix_reservas_intervalo_data_hora', 'inicio_data_hora', 'fim_data_hora'), # Alterado nome do índice e colunas
-        """
-        Índice composto para 'inicio_data_hora' e 'fim_data_hora'.
-        Otimiza consultas que buscam reservas dentro de um determinado intervalo de tempo.
-        """,
-        Index('ix_reservas_sala_data_hora_status', 'sala_id', 'inicio_data_hora', 'fim_data_hora', 'status'), # Alterado nome do índice e colunas
-        """
-        Índice composto para 'sala_id', 'inicio_data_hora', 'fim_data_hora' e 'status'.
-        Essencial para verificar a disponibilidade de salas em um período,
-        filtrando por sala e status (ex: buscar reservas ativas para a sala X em um período Y).
-        """,
-        Index('ix_reservas_usuario_status', 'usuario_id', 'status'), # Alterado nome do índice e colunas
-        """
-        Índice composto para 'usuario_id' e 'status'.
-        Eficiente para buscar todas as reservas de um usuário específico,
-        filtradas por seu status (ex: todas as reservas pendentes do usuário Z).
-        """
+        Index('ix_reservas_intervalo_data_hora', 'inicio_data_hora', 'fim_data_hora'),
+        Index('ix_reservas_sala_data_hora_status', 'sala_id', 'inicio_data_hora', 'fim_data_hora', 'status'),
+        Index('ix_reservas_usuario_status', 'usuario_id', 'status'),
     )
 
     # Relacionamentos ORM

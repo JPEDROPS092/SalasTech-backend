@@ -7,7 +7,7 @@ from fastapi import status
 from SalasTech.app.models import dto
 from SalasTech.app.services import report_service
 from SalasTech.app.core import dependencies
-from SalasTech.app.core.security import session
+from SalasTech.app.core.security.middleware import get_current_user, get_admin_user
 
 
 router = APIRouter(
@@ -20,41 +20,41 @@ def generate_usage_report(
     start_date: datetime,
     end_date: datetime,
     department_id: Optional[int] = None,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Gera relatório de uso das salas (apenas administradores e gestores)
     """
     return report_service.generate_usage_report(start_date, end_date, department_id)
 
-@router.get("/occupancy", response_model=list[dto.RoomOccupancyReport])
+@router.get("/occupancy", response_model=list[dto.RelatorioOcupacaoSalaDTO])
 def generate_occupancy_report(
     start_date: datetime,
     end_date: datetime,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Gera relatório de ocupação das salas (apenas administradores e gestores)
     """
     return report_service.generate_occupancy_report(start_date, end_date)
 
-@router.get("/department-usage", response_model=list[dto.DepartmentUsageReport])
+@router.get("/department-usage", response_model=list[dto.RelatorioUsoDepartamentoDTO])
 def generate_department_usage_report(
     start_date: datetime,
     end_date: datetime,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Gera relatório de uso por departamento (apenas administradores e gestores)
     """
     return report_service.generate_department_usage_report(start_date, end_date)
 
-@router.get("/user-activity", response_model=list[dto.UserActivityReport])
+@router.get("/user-activity", response_model=list[dto.RelatorioAtividadeUsuarioDTO])
 def generate_user_activity_report(
     start_date: datetime,
     end_date: datetime,
     department_id: Optional[int] = None,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Gera relatório de atividade dos usuários (apenas administradores)
@@ -65,7 +65,7 @@ def generate_user_activity_report(
 def generate_maintenance_report(
     start_date: datetime,
     end_date: datetime,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Gera relatório de manutenções realizadas (apenas administradores)
@@ -76,7 +76,7 @@ def generate_maintenance_report(
 def get_statistics(
     start_date: datetime,
     end_date: datetime,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Retorna estatísticas gerais do sistema (apenas administradores)
@@ -90,7 +90,7 @@ def export_report(
     end_date: datetime,
     format: str = Query("json", regex="^(json|csv|pdf)$"),
     department_id: Optional[int] = None,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Exporta relatórios em diferentes formatos (apenas administradores)

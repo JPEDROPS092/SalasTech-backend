@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from SalasTech.app.models.db import (
-    DepartmentDb, 
-    UserDb, 
-    RoomDb, 
-    RoomResourceDb, 
-    ReservationDb
+    DepartamentoDb, 
+    UsuarioDb, 
+    SalaDb, 
+    RecursoSalaDb, 
+    ReservaDb
 )
 from SalasTech.app.models.enums import UserRole, RoomStatus, ReservationStatus
 from SalasTech.app.core.security.bcrypt_hashing import hash as get_password_hash

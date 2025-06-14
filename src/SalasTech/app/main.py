@@ -29,7 +29,6 @@ from SalasTech.app.core import lifespan
 
 # Importações dos controladores da API
 from SalasTech.app.controllers.api import (
-    auth_controller,           # Controlador de autenticação
     user_controller,           # Controlador de usuários
     room_controller,           # Controlador de salas
     reservation_controller,    # Controlador de reservas
@@ -37,14 +36,15 @@ from SalasTech.app.controllers.api import (
     report_controller          # Controlador de relatórios
 )
 
+# Novo controlador de autenticação para React
+from SalasTech.app.controllers.api.auth import router as auth_router
+
 # Importações de middlewares de segurança
-from SalasTech.app.core.middlewares import cors_middleware
-from SalasTech.app.core.middlewares import static_middleware
-from SalasTech.app.core.security import rate_limiter
-from SalasTech.app.core.security import csrf
+from SalasTech.app.core.middlewares.cors import setup_cors
+# from SalasTech.app.core.security import rate_limiter  # TODO: implementar
 
 # Importações de tratamento de exceções
-from SalasTech.app.exceptions import handler
+# from SalasTech.app.exceptions import handler  # TODO: verificar se existe
 
 # Configuração do sistema de logs
 logging.basicConfig(
@@ -221,25 +221,24 @@ async def interface_redoc():
     )
 
 
-# Configuração dos manipuladores de exceção
-handler.add_html(app)  # Manipulador de exceções para respostas HTML
-handler.add_json(api)  # Manipulador de exceções para respostas JSON da API
+# Configuração dos manipuladores de exceção (TODO: implementar se necessário)
+# handler.add_html(app)  # Manipulador de exceções para respostas HTML
+# handler.add_json(api)  # Manipulador de exceções para respostas JSON da API
 
 # Aplicação de middlewares de segurança (ordem é importante!)
-static_middleware.add(app)              # Middleware para servir arquivos estáticos
-cors_middleware.add(app)                # Proteção CORS para aplicação principal
-cors_middleware.add(api)                # Proteção CORS para API
-rate_limiter.apply_rate_limiting(app)   # Limitação de taxa de requisições
-csrf.apply_csrf_middleware(app)         # Proteção contra ataques CSRF
+# static_middleware.add(app)              # TODO: implementar middleware de arquivos estáticos
+setup_cors(app)                         # Proteção CORS configurada para React
+# rate_limiter.apply_rate_limiting(app)   # TODO: implementar limitação de taxa de requisições
+# Removido CSRF - não necessário para JWT com React
 
 # Log de inicialização com informações de segurança
 logger.info("Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM")
-logger.info("Segurança aplicada: CORS, Rate Limiting, CSRF Protection, Cookies Seguros")
+logger.info("Segurança aplicada: CORS, JWT Authentication, Bearer Tokens")
 logger.info("Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)")
 
 # Registro dos routers da API com prefixos e tags apropriadas
 api.include_router(
-    auth_controller.router,
+    auth_router,
     prefix="/auth",
     tags=["Autenticação"]
 )

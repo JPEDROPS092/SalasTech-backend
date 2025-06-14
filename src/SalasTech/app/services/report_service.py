@@ -130,24 +130,24 @@ def generate_department_usage_report(start_date: datetime, end_date: datetime) -
             rooms_usage.append(room_occupancy)
         
         # Criar objeto de relatório do departamento
-        department_report = dto.DepartmentUsageReport(
-            department_id=department.id,
-            department_name=department.name,
-            total_rooms=len(rooms),
-            total_reservations=total_reservations,
-            rooms_usage=rooms_usage
+        department_report = dto.RelatorioUsoDepartamentoDTO(
+            departamento_id=department.id,
+            nome_departamento=department.nome,
+            total_salas=len(rooms),
+            total_reservas=total_reservations,
+            uso_salas=rooms_usage
         )
         
         report.append(department_report)
     
     # Ordenar por número total de reservas (decrescente)
-    report.sort(key=lambda x: x.total_reservations, reverse=True)
+    report.sort(key=lambda x: x.total_reservas, reverse=True)
     
     return report
 
 
 def generate_user_activity_report(start_date: datetime, end_date: datetime, 
-                                 department_id: Optional[int] = None) -> List[dto.UserActivityReport]:
+                                 department_id: Optional[int] = None) -> List[dto.RelatorioAtividadeUsuarioDTO]:
     """
     Gera relatório de atividade dos usuários
     """
@@ -177,18 +177,18 @@ def generate_user_activity_report(start_date: datetime, end_date: datetime,
         stats = reservation_repo.get_user_reservation_stats(user.id)
         
         # Criar objeto de relatório
-        user_activity = dto.UserActivityReport(
-            user_id=user.id,
-            user_name=f"{user.name} {user.surname}",
-            total_reservations=stats["total_reservations"],
-            total_hours=stats["total_hours"],
-            reservations_by_status=stats["status_counts"]
+        user_activity = dto.RelatorioAtividadeUsuarioDTO(
+            usuario_id=user.id,
+            nome_usuario=f"{user.nome} {user.sobrenome}",
+            total_reservas=stats["total_reservations"],
+            total_horas=stats["total_hours"],
+            reservas_por_status=stats["status_counts"]
         )
         
         report.append(user_activity)
     
     # Ordenar por número total de reservas (decrescente)
-    report.sort(key=lambda x: x.total_reservations, reverse=True)
+    report.sort(key=lambda x: x.total_reservas, reverse=True)
     
     return report
 

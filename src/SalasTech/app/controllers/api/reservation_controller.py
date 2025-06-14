@@ -8,7 +8,7 @@ from SalasTech.app.models import dto
 from SalasTech.app.models import enums
 from SalasTech.app.services import reservation_service
 from SalasTech.app.core import dependencies
-from SalasTech.app.core.security import session
+from SalasTech.app.core.security.middleware import get_current_user, get_admin_user
 from SalasTech.app.exceptions.scheme import AppException
 
 
@@ -17,7 +17,7 @@ router = APIRouter(
     tags=["Reservations"]
 )
 
-@router.get("", response_model=list[dto.ReservationResponse])
+@router.get("", response_model=list[dto.ReservaRespostaDTO])
 def get_all(
     limit: int = Query(1000, gt=0),
     offset: int = Query(0, ge=0),
@@ -26,7 +26,7 @@ def get_all(
     user_id: Optional[int] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    current_user: dto.UserDTO = Depends(session.get_user)
+    current_user = Depends(get_current_user)
 ):
     """
     Retorna todas as reservas com filtros opcionais
@@ -41,12 +41,12 @@ def get_all(
         end_date=end_date
     )
 
-@router.get("/my", response_model=list[dto.ReservationResponse])
+@router.get("/my", response_model=list[dto.ReservaRespostaDTO])
 def get_my_reservations(
     limit: int = Query(1000, gt=0),
     offset: int = Query(0, ge=0),
     status: Optional[enums.ReservationStatus] = None,
-    current_user: dto.UserDTO = Depends(session.get_user)
+    current_user = Depends(get_current_user)
 ):
     """
     Retorna as reservas do usuário atual
@@ -58,22 +58,22 @@ def get_my_reservations(
         status=status
     )
 
-@router.get("/{id}", response_model=dto.ReservationResponse)
-def get_by_id(id: int = Path(ge=1), current_user: dto.UserDTO = Depends(session.get_user)):
+@router.get("/{id}", response_model=dto.ReservaRespostaDTO)
+def get_by_id(id: int = Path(ge=1), current_user = Depends(get_current_user)):
     """
     Retorna uma reserva pelo ID
     """
     return reservation_service.get_by_id(id)
 
-@router.post("", response_model=dto.ReservationResponse, status_code=status.HTTP_201_CREATED)
-def create_reservation(reservation: dto.ReservationCreate, current_user: dto.UserDTO = Depends(session.get_user)):
+@router.post("", response_model=dto.ReservaRespostaDTO, status_code=status.HTTP_201_CREATED)
+def create_reservation(reservation: dto.ReservaCriarDTO, current_user = Depends(get_current_user)):
     """
     Cria uma nova reserva
     """
     return reservation_service.create_reservation(current_user.id, reservation)
 
-@router.put("/{id}", response_model=dto.ReservationResponse)
-def update_reservation(id: int, reservation: dto.ReservationUpdate, current_user: dto.UserDTO = Depends(session.get_user)):
+@router.put("/{id}", response_model=dto.ReservaRespostaDTO)
+def update_reservation(id: int, reservation: dto.ReservaAtualizarDTO, current_user = Depends(get_current_user)):
     """
     Atualiza uma reserva existente
     """
@@ -83,20 +83,20 @@ def update_reservation(id: int, reservation: dto.ReservationUpdate, current_user
 def cancel_reservation(
     id: int, 
     reason: str = Query(None),
-    current_user: dto.UserDTO = Depends(session.get_user)
+    current_user = Depends(get_current_user)
 ):
     """
     Cancela uma reserva
     """
     reservation_service.cancel_reservation(id, current_user.id, reason)
 
-@router.get("/room/{room_id}", response_model=list[dto.ReservationResponse])
+@router.get("/room/{room_id}", response_model=list[dto.ReservaRespostaDTO])
 def get_by_room(
     room_id: int = Path(ge=1),
     limit: int = Query(1000, gt=0),
     offset: int = Query(0, ge=0),
     status: Optional[enums.ReservationStatus] = None,
-    current_user: dto.UserDTO = Depends(session.get_user)
+    current_user = Depends(get_current_user)
 ):
     """
     Retorna reservas de uma sala específica
@@ -108,13 +108,13 @@ def get_by_room(
         status=status
     )
 
-@router.get("/user/{user_id}", response_model=list[dto.ReservationResponse])
+@router.get("/user/{user_id}", response_model=list[dto.ReservaRespostaDTO])
 def get_by_user(
     user_id: int = Path(ge=1),
     limit: int = Query(1000, gt=0),
     offset: int = Query(0, ge=0),
     status: Optional[enums.ReservationStatus] = None,
-    current_user: dto.UserDTO = Depends(session.get_admin)
+    current_user = Depends(get_admin_user)
 ):
     """
     Retorna reservas de um usuário específico (apenas administradores)

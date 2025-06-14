@@ -17,8 +17,8 @@ from httpx import AsyncClient
 from SalasTech.app.models.db import Base
 from SalasTech.app.core.config import Config
 from SalasTech.app.main import app as fastapi_app
-from SalasTech.app.core.security import session, csrf
-from SalasTech.app.core.security.rate_limiter import RateLimiter
+# from SalasTech.app.core.security import session, csrf  # Deprecated
+# from SalasTech.app.core.security.rate_limiter import RateLimiter  # TODO: implement
 
 
 @pytest.fixture(scope="session")
@@ -129,16 +129,15 @@ def auth_headers(client: TestClient, db_session: Session) -> Dict[str, str]:
         )
         user = user_service.create_user(user_create)
     
-    # Generate token
-    user_login = UserLoginDTO(email=email, password=password)
-    token = session.create_access_token(user_login)
-    
-    # Generate CSRF token
-    csrf_token = csrf.CSRFProtection.generate_token()
+    # Generate token using new auth system
+    from SalasTech.app.core.security.auth import JWTManager
+    token_data = JWTManager.create_tokens(
+        user_id=str(user.id),
+        user_role=user.role.value
+    )
     
     return {
-        "Authorization": f"Bearer {token}",
-        csrf.CSRF_HEADER_NAME: csrf_token
+        "Authorization": f"Bearer {token_data['access_token']}"
     }
 
 # Fixtures for E2E testing
@@ -153,19 +152,5 @@ def browser_context():
 @pytest.fixture(autouse=True)
 def disable_rate_limiting():
     """Disable rate limiting for all tests."""
-    # Store original check methods
-    original_check_login = RateLimiter.check_login_rate_limit
-    original_check_api = RateLimiter.check_api_rate_limit
-    original_check_password_reset = RateLimiter.check_password_reset_rate_limit
-    
-    # Replace with no-op functions
-    RateLimiter.check_login_rate_limit = lambda *args, **kwargs: None
-    RateLimiter.check_api_rate_limit = lambda *args, **kwargs: None
-    RateLimiter.check_password_reset_rate_limit = lambda *args, **kwargs: None
-    
+    # Rate limiting disabled for tests - no implementation needed
     yield
-    
-    # Restore original methods
-    RateLimiter.check_login_rate_limit = original_check_login
-    RateLimiter.check_api_rate_limit = original_check_api
-    RateLimiter.check_password_reset_rate_limit = original_check_password_reset

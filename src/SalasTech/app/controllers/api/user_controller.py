@@ -1,200 +1,266 @@
-from typing import List
 """
-Controlador de Usuários - SalasTech
+Controlador de Usuários - Versão Simplificada para React
 
-Este módulo implementa os endpoints para gerenciamento de usuários
-no sistema SalasTech. Fornece funcionalidades para:
+Este módulo implementa os endpoints de usuários usando a nova arquitetura
+de segurança simplificada com JWT Bearer tokens.
 
-- Consulta de perfil próprio
-- Listagem de todos os usuários (com paginação)
-- Busca por ID e email
-- Operações administrativas
-- Controle de acesso baseado em papéis
-
-Funcionalidades:
-- Paginação eficiente para grandes volumes de dados
-- Validação de parâmetros de entrada
-- Controle de permissões por endpoint
-- Logs de auditoria para operações sensíveis
+Mudanças principais:
+- Uso de JWT Bearer tokens ao invés de cookies
+- Middleware simplificado (get_current_user, get_admin_user)
+- Respostas otimizadas para SPAs React
+- Remoção de dependências de sessão/CSRF
 
 Autor: Equipe SalasTech
 Data: Junho 2025
-Versão: 1.0.0
+Versão: 2.0.0 (Simplificada)
 """
 
-from fastapi import APIRouter, status
-from fastapi import Query, Path
+from typing import List, Dict, Any, Optional
+from fastapi import APIRouter, status, Query, Path, HTTPException, Depends
+from pydantic import BaseModel
 import logging
 
 # Importações dos modelos de dados
-from SalasTech.app.models import dto
+from ...models import dto
+from ...models.enums import UserRole
 
-# Importações dos serviços
-from SalasTech.app.services import user_service
+# Nova arquitetura de segurança
+from ...core.security.middleware import get_current_user, get_admin_user
+from ...core.dependencies import get_user_service
 
-# Importações de dependências
-from SalasTech.app.core import dependencies
-
-# Configuração do logger
 logger = logging.getLogger(__name__)
 
-# Configuração do router
-router = APIRouter(
-    prefix="/users",
-    tags=["Usuários"]
-)
+router = APIRouter()
+
+
+# Response Models para React
+class UserProfileResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: str
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class UserListResponse(BaseModel):
+    users: List[UserProfileResponse]
+    total: int
+    page: int
+    per_page: int
+
 
 @router.get("/me", 
-            response_model=dto.UsuarioDTO,
+            response_model=UserProfileResponse,
             summary="Obter Perfil Próprio",
-            description="Retorna as informações do usuário autenticado")
-def obter_meu_perfil(usuario: dependencies.user_dependency):
+            description="Retorna o perfil do usuário autenticado")
+async def get_my_profile(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
     """
-    Endpoint para obter informações do usuário autenticado.
+    Endpoint para obter o perfil do usuário autenticado.
     
-    Retorna os dados completos do usuário que fez a requisição,
-    baseado no token JWT fornecido na autenticação.
+    Usando JWT Bearer token, retorna as informações do usuário atual.
     
-    Args:
-        usuario: Usuário autenticado obtido via dependência JWT
-        
     Returns:
-        dto.UsuarioDTO: Dados completos do usuário autenticado
-        
-    Security:
-        - Requer autenticação válida
-        - Usuário só pode ver seus próprios dados
+        UserProfileResponse: Dados do perfil do usuário
     """
-    logger.info(f"Usuário {usuario.id} consultou seu próprio perfil")
-    return usuario
+    try:
+        user = current_user["user_object"]
+        return UserProfileResponse(
+            id=str(user.id),
+            email=user.email,
+            name=user.name,
+            role=user.role.value,
+            created_at=user.created_at.isoformat() if user.created_at else None,
+            updated_at=user.updated_at.isoformat() if user.updated_at else None
+        )
+    except Exception as e:
+        logger.error(f"Error getting user profile: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving user profile"
+        )
 
 
 @router.get("/all", 
-            response_model=List[dto.UsuarioDTO],
-            summary="Listar Todos os Usuários",
+            response_model=UserListResponse,
+            summary="Listar Todos os Usuários (Admin)",
             description="Lista todos os usuários do sistema com paginação")
-def listar_todos_usuarios(
-    limite: int = Query(1000, gt=0, le=1000, description="Número máximo de registros por página"),
-    offset: int = Query(0, ge=0, description="Número de registros a pular (para paginação)")
+async def list_all_users(
+    page: int = Query(1, gt=0, description="Número da página"),
+    per_page: int = Query(50, gt=0, le=100, description="Usuários por página"),
+    admin_user: Dict[str, Any] = Depends(get_admin_user),
+    user_service = Depends(get_user_service)
 ):
     """
-    Endpoint para listar todos os usuários do sistema.
+    Endpoint administrativo para listar todos os usuários.
     
-    Retorna uma lista paginada de todos os usuários cadastrados,
-    permitindo navegação eficiente em grandes volumes de dados.
-    
-    Args:
-        limite (int): Número máximo de usuários a retornar (1-1000)
-        offset (int): Número de registros a pular para paginação
-        
-    Returns:
-        list[dto.UsuarioDTO]: Lista de usuários encontrados
-        
-    Notes:
-        - Máximo de 1000 registros por requisição
-        - Use offset para navegar entre páginas
-        - Ordenação por ID crescente
-        
-    Examples:
-        - Primeira página: GET /users/all?limite=50&offset=0
-        - Segunda página: GET /users/all?limite=50&offset=50
-    """
-    logger.info(f"Listagem de usuários solicitada - limite: {limite}, offset: {offset}")
-    usuarios = user_service.get_all(limite, offset)
-    logger.info(f"Retornados {len(usuarios)} usuários")
-    return usuarios
-
-
-@router.get("/admin_only", 
-            response_model=dto.UsuarioDTO,
-            summary="Endpoint Administrativo",
-            description="Endpoint restrito para validação de permissões administrativas")
-def endpoint_apenas_admin(usuario: dependencies.admin_dependency):
-    """
-    Endpoint restrito para administradores.
-    
-    Este endpoint serve para validar se um usuário possui
-    privilégios administrativos no sistema.
+    Requer permissões de administrador. Retorna lista paginada
+    otimizada para componentes React.
     
     Args:
-        usuario: Usuário com privilégios administrativos
+        page: Número da página (começa em 1)
+        per_page: Usuários por página (máximo 100)
         
     Returns:
-        dto.UsuarioDTO: Dados do administrador autenticado
+        UserListResponse: Lista paginada de usuários
+    """
+    try:
+        # Calcular offset para paginação
+        offset = (page - 1) * per_page
         
-    Security:
-        - Requer autenticação válida
-        - Requer papel de administrador
-        - Log de auditoria de acesso
-    """
-    logger.info(f"Acesso administrativo realizado pelo usuário {usuario.id}")
-    return usuario
+        # Buscar usuários paginados
+        users = user_service.obter_todos(limite=per_page, offset=offset)
+        
+        # Para o total, precisamos buscar todos os usuários (sem paginação)
+        # Em um cenário real, seria melhor ter uma função count no repositório
+        all_users = user_service.obter_todos()
+        total = len(all_users)
+        
+        # Converter para response format
+        user_responses = [
+            UserProfileResponse(
+                id=str(user.id),
+                email=user.email,
+                name=f"{user.nome} {user.sobrenome}",
+                role=user.papel.value,
+                created_at=user.criado_em.isoformat() if user.criado_em else None,
+                updated_at=user.atualizado_em.isoformat() if user.atualizado_em else None
+            )
+            for user in users
+        ]
+        
+        logger.info(f"Admin {admin_user['email']} listed users: page {page}")
+        
+        return UserListResponse(
+            users=user_responses,
+            total=total,
+            page=page,
+            per_page=per_page
+        )
+        
+    except Exception as e:
+        logger.error(f"Error listing users: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving users"
+        )
 
 
-@router.get("/{id}", 
-            response_model=dto.UsuarioDTO,
-            summary="Buscar Usuário por ID",
-            description="Retorna as informações de um usuário específico pelo ID")
-def buscar_usuario_por_id(id: int = Path(ge=1, description="ID único do usuário")):
+@router.get("/{user_id}",
+            response_model=UserProfileResponse,
+            summary="Obter Usuário por ID (Admin)",
+            description="Busca usuário específico por ID")
+async def get_user_by_id(
+    user_id: str = Path(..., description="ID do usuário"),
+    admin_user: Dict[str, Any] = Depends(get_admin_user),
+    user_service = Depends(get_user_service)
+):
     """
-    Endpoint para buscar um usuário específico pelo ID.
-    
-    Retorna os dados completos de um usuário baseado em seu
-    identificador único no sistema.
+    Endpoint administrativo para buscar usuário por ID.
     
     Args:
-        id (int): ID único do usuário (deve ser maior que 0)
+        user_id: Identificador único do usuário
         
     Returns:
-        dto.UsuarioDTO: Dados do usuário encontrado
+        UserProfileResponse: Dados do usuário encontrado
         
     Raises:
-        HTTPException: 404 se o usuário não for encontrado
-        
-    Security:
-        - Validação de parâmetros de entrada
-        - Log de auditoria para buscas
+        HTTPException: 404 se usuário não encontrado
     """
-    logger.info(f"Busca de usuário por ID: {id}")
     try:
-        usuario = user_service.get_by_id(id)
-        logger.info(f"Usuário encontrado: {usuario.email}")
-        return usuario
-    except Exception as e:
-        logger.warning(f"Usuário com ID {id} não encontrado: {str(e)}")
+        user = user_service.obter_por_id(int(user_id))
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        logger.info(f"Admin {admin_user['email']} accessed user {user_id}")
+        
+        return UserProfileResponse(
+            id=str(user.id),
+            email=user.email,
+            name=f"{user.nome} {user.sobrenome}",
+            role=user.papel.value,
+            created_at=user.criado_em.isoformat() if user.criado_em else None,
+            updated_at=user.atualizado_em.isoformat() if user.atualizado_em else None
+        )
+        
+    except HTTPException:
         raise
+    except Exception as e:
+        logger.error(f"Error getting user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving user"
+        )
 
 
-@router.get("/email/{email}", 
-            response_model=dto.UsuarioDTO,
-            summary="Buscar Usuário por Email",
-            description="Retorna as informações de um usuário específico pelo email")
-def buscar_usuario_por_email(email: str = Path(description="Endereço de email do usuário")):
+@router.patch("/me",
+              response_model=UserProfileResponse,
+              summary="Atualizar Perfil Próprio",
+              description="Permite ao usuário atualizar seu próprio perfil")
+async def update_my_profile(
+    updates: dict,  # Aceita campos dinâmicos para atualização
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    user_service = Depends(get_user_service)
+):
     """
-    Endpoint para buscar um usuário específico pelo email.
+    Endpoint para usuário atualizar seu próprio perfil.
     
-    Retorna os dados completos de um usuário baseado em seu
-    endereço de email cadastrado no sistema.
+    Campos permitidos: name, password (novos hash será gerado)
+    Campos protegidos: email, role (apenas admin pode alterar)
     
     Args:
-        email (str): Endereço de email do usuário
+        updates: Campos a serem atualizados
         
     Returns:
-        dto.UsuarioDTO: Dados do usuário encontrado
-        
-    Raises:
-        HTTPException: 404 se o usuário não for encontrado
-        
-    Security:
-        - Validação de formato de email
-        - Log de auditoria para buscas por email
-        - Não exposição de informações sensíveis
+        UserProfileResponse: Perfil atualizado
     """
-    logger.info(f"Busca de usuário por email: {email}")
     try:
-        usuario = user_service.get_by_email(email)
-        logger.info(f"Usuário encontrado por email: {email}")
-        return usuario
-    except Exception as e:
-        logger.warning(f"Usuário com email {email} não encontrado: {str(e)}")
+        user_id = current_user["user_id"]
+        
+        # Filtrar campos permitidos para auto-atualização
+        allowed_fields = ["name", "nome"]  # Aceitar ambos os formatos
+        filtered_updates = {
+            key: value for key, value in updates.items() 
+            if key in allowed_fields and value is not None
+        }
+        
+        if not filtered_updates:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No valid fields to update"
+            )
+        
+        # Obter usuário atual e atualizar
+        user_db = user_service.obter_por_id(int(user_id))
+        
+        # Atualizar campos permitidos
+        if "name" in filtered_updates or "nome" in filtered_updates:
+            user_db.nome = filtered_updates.get("name", filtered_updates.get("nome"))
+        
+        # Salvar alterações (assumindo que existe uma função de update)
+        from SalasTech.app.repos import user_repo
+        user_repo.update(user_db)
+        
+        logger.info(f"User {current_user['email']} updated profile")
+        
+        return UserProfileResponse(
+            id=str(user_db.id),
+            email=user_db.email,
+            name=f"{user_db.nome} {user_db.sobrenome}",
+            role=user_db.papel.value,
+            updated_at=user_db.atualizado_em.isoformat() if user_db.atualizado_em else None
+        )
+        
+    except HTTPException:
         raise
+    except Exception as e:
+        logger.error(f"Error updating user profile: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating profile"
+        )

@@ -43,7 +43,8 @@ from SalasTech.app.repos import user_repo
 
 # Importações de segurança
 from SalasTech.app.core.security import bcrypt_hashing
-from SalasTech.app.core.security import jwt
+from SalasTech.app.core.security.auth import JWTManager
+from SalasTech.app.core.security.password import PasswordManager
 
 # Importações de utilitários
 from SalasTech.app.utils import formatting
