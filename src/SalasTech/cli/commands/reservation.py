@@ -31,9 +31,9 @@ def list_reservations(
             status_enum = enums.ReservationStatus(status.upper())
             reservations = [r for r in reservations if r.status == status_enum]
         if room_id:
-            reservations = [r for r in reservations if r.room_id == room_id]
+            reservations = [r for r in reservations if r.sala_id == room_id]
         if user_id:
-            reservations = [r for r in reservations if r.user_id == user_id]
+            reservations = [r for r in reservations if r.sala_id == user_id]
         
         table = Table(title="Reservas")
         table.add_column("ID", justify="right", style="cyan")
@@ -46,7 +46,7 @@ def list_reservations(
         for res in reservations:
             table.add_row(
                 str(res.id),
-                str(res.room_id),
+                str(res.sala_id),
                 str(res.user_id),
                 res.start_datetime.strftime("%Y-%m-%d %H:%M"),
                 res.end_datetime.strftime("%Y-%m-%d %H:%M"),

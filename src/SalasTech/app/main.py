@@ -221,15 +221,8 @@ async def interface_redoc():
     )
 
 
-# Configuração dos manipuladores de exceção (TODO: implementar se necessário)
-# handler.add_html(app)  # Manipulador de exceções para respostas HTML
-# handler.add_json(api)  # Manipulador de exceções para respostas JSON da API
 
-# Aplicação de middlewares de segurança (ordem é importante!)
-# static_middleware.add(app)              # TODO: implementar middleware de arquivos estáticos
 setup_cors(app)                         # Proteção CORS configurada para React
-# rate_limiter.apply_rate_limiting(app)   # TODO: implementar limitação de taxa de requisições
-# Removido CSRF - não necessário para JWT com React
 
 # Log de inicialização com informações de segurança
 logger.info("Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM")
@@ -239,34 +232,28 @@ logger.info("Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)")
 # Registro dos routers da API com prefixos e tags apropriadas
 api.include_router(
     auth_router,
-    prefix="/auth",
-    tags=["Autenticação"]
+
 )
 api.include_router(
     user_controller.router,
-    prefix="/users",
-    tags=["Usuários"]
+
 )
 api.include_router(
     room_controller.router,
-    prefix="/rooms",
-    tags=["Salas"]
+
 )
 api.include_router(
     reservation_controller.router,
-    prefix="/reservations",
-    tags=["Reservas"]
+
 )
 api.include_router(
     department_controller.router,
-    prefix="/departments",
-    tags=["Departamentos"]
+
 )
 api.include_router(
     report_controller.router,
-    prefix="/reports",
-    tags=["Relatórios"]
 )
+
 
 # Montagem da API como sub-aplicação
 app.mount("/api", api)

@@ -9,7 +9,7 @@ from SalasTech.app.core.security.middleware import get_current_user, get_admin_u
 
 
 router = APIRouter(
-    prefix="/departments",
+#    prefix="/departments",
     tags=["Departments"]
 )
 

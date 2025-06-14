@@ -30,7 +30,7 @@ class DepartamentoDb(Base):
     Um departamento pode ter múltiplos usuários e salas associadas a ele.
     Também pode ter um gerente (que é um usuário) atribuído, que é opcional.
     """
-    __tablename__ = 'departamentos'
+    __tablename__ = 'departments'
     """Nome da tabela no banco de dados."""
 
     id = mapped_column("id", Integer, primary_key=True, autoincrement=True)
@@ -38,35 +38,35 @@ class DepartamentoDb(Base):
     Chave primária da tabela.
     Inteiro, auto-incrementável, identifica unicamente cada departamento.
     """
-    nome = mapped_column("nome", String, nullable=False)
+    nome = mapped_column("name", String, nullable=False)
     """
     Nome do departamento.
     String, obrigatório. Ex: "Tecnologia", "Daic".
     """
-    codigo = mapped_column("codigo", String, nullable=False, unique=True, index=True) # Alterado de 'code' para 'codigo'
+    codigo = mapped_column("code", String, nullable=False, unique=True, index=True)
     """
     Código único do departamento.
     String, obrigatório, deve ser único para cada departamento.
     Possui um índice para consultas rápidas e para garantir a unicidade. Ex: "TECH", "RH".
     """
-    descricao = mapped_column("descricao", Text, nullable=True)
+    descricao = mapped_column("description", Text, nullable=True)
     """
     Descrição detalhada do departamento.
     Texto longo, opcional.
     """
-    gerente_id = mapped_column("gerente_id", Integer, ForeignKey('usuarios.id'), nullable=True, index=True) # Alterado ForeignKey para 'usuarios.id'
+    gerente_id = mapped_column("manager_id", Integer, ForeignKey('users.id'), nullable=True, index=True)
     """
-    Chave estrangeira que referencia o ID de um usuário na tabela 'usuarios'.
+    Chave estrangeira que referencia o ID de um usuário na tabela 'users'.
     Indica o gerente do departamento. É opcional (`nullable=True`), pois um departamento pode
     não ter um gerente atribuído inicialmente ou o gerente pode ser desconhecido.
     Possui um índice para otimizar buscas por departamentos gerenciados por um usuário específico.
     """
-    criado_em = mapped_column("criado_em", DateTime(), server_default=current_timestamp()) # Alterado de 'created_at' para 'criado_em'
+    criado_em = mapped_column("created_at", DateTime(), server_default=current_timestamp())
     """
     Carimbo de data/hora de criação do registro.
     Definido automaticamente pelo servidor no momento da inserção.
     """
-    atualizado_em = mapped_column("atualizado_em", DateTime(), server_default=current_timestamp(), server_onupdate=current_timestamp()) # Alterado de 'updated_at' para 'atualizado_em'
+    atualizado_em = mapped_column("updated_at", DateTime(), server_default=current_timestamp(), server_onupdate=current_timestamp())
     """
     Carimbo de data/hora da última atualização do registro.
     `server_default` define o valor inicial e `server_onupdate` atualiza
@@ -75,7 +75,7 @@ class DepartamentoDb(Base):
 
     # Índices Adicionais para a tabela
     __table_args__ = (
-        Index('ix_departamentos_nome', 'nome'),
+        Index('ix_departments_name', 'name'),
     )
 
     # Relacionamentos ORM
@@ -114,7 +114,7 @@ class UsuarioDb(Base): # Alterado de 'UserDb' para 'UsuarioDb'
     Um usuário pode estar associado a um departamento, fazer reservas de salas,
     aprovar reservas de outros usuários e ter informações fiscais/salariais.
     """
-    __tablename__ = 'usuarios' # Alterado de 'users' para 'usuarios'
+    __tablename__ = 'users'
     """Nome da tabela no banco de dados."""
 
     id = mapped_column("id", Integer, primary_key=True, autoincrement=True)
@@ -122,17 +122,17 @@ class UsuarioDb(Base): # Alterado de 'UserDb' para 'UsuarioDb'
     Chave primária da tabela.
     Inteiro, auto-incrementável, identifica unicamente cada usuário.
     """
-    nome = mapped_column("nome", String, nullable=False)
+    nome = mapped_column("name", String, nullable=False)
     """
     Nome do usuário.
     String, obrigatório.
     """
-    sobrenome = mapped_column("sobrenome", String, nullable=False)
+    sobrenome = mapped_column("surname", String, nullable=False)
     """
     Sobrenome do usuário.
     String, obrigatório.
     """
-    papel = mapped_column("papel", Enum(enums.UserRole), default=enums.UserRole.USER, index=True) # Alterado de 'role' para 'papel'
+    papel = mapped_column("role", Enum(enums.UserRole), default=enums.UserRole.USER, index=True)
     """
     Papel ou nível de acesso do usuário no sistema.
     Utiliza um tipo Enum (`enums.UserRole`) para valores controlados (ex: ADMIN, USER, MANAGER).
@@ -144,29 +144,29 @@ class UsuarioDb(Base): # Alterado de 'UserDb' para 'UsuarioDb'
     String, obrigatório, deve ser único para cada usuário.
     Possui um índice para buscas eficientes e para garantir a unicidade. Utilizado para login.
     """
-    senha = mapped_column("senha", String, nullable=False) # Alterado de 'password' para 'senha'
+    senha = mapped_column("password", String, nullable=False)
     """
     Senha do usuário (geralmente armazenada como um hash por segurança).
     String, obrigatório.
     """
-    departamento_id = mapped_column("departamento_id", Integer, ForeignKey('departamentos.id'), nullable=True, index=True) # Corrigido 'departomento_id' para 'departamento_id', Alterado ForeignKey para 'departamentos.id'
+    departamento_id = mapped_column("department_id", Integer, ForeignKey('departments.id'), nullable=True, index=True)
     """
     Chave estrangeira que referencia o ID do departamento (`DepartamentoDb`) ao qual o usuário pertence.
     É opcional (`nullable=True`), pois um usuário pode não estar vinculado a um departamento.
     Possui um índice para otimizar buscas por usuários de um departamento específico.
     """
-    atualizado_em = mapped_column("atualizado_em", DateTime(), server_default=current_timestamp(), server_onupdate=current_timestamp()) # Alterado de 'updated_at' para 'atualizado_em'
+    atualizado_em = mapped_column("updated_at", DateTime(), server_default=current_timestamp(), server_onupdate=current_timestamp())
     """
     Carimbo de data/hora da última atualização do registro.
     """
-    criado_em = mapped_column("criado_em", DateTime(), server_default=current_timestamp()) # Alterado de 'created_at' para 'criado_em'
+    criado_em = mapped_column("created_at", DateTime(), server_default=current_timestamp())
     """
     Carimbo de data/hora de criação do registro.
     """
 
     # Índices Adicionais para a tabela
     __table_args__ = (
-        Index('ix_usuarios_nome_sobrenome', 'nome', 'sobrenome'),
+        Index('ix_users_name_surname', 'name', 'surname'),
     )
 
     # Relacionamentos ORM

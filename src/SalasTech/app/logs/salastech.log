@@ -26,3 +26,59 @@
 2025-06-14 16:19:47,634 - main - INFO - Aplicação SalasTech iniciada com sucesso!
 2025-06-14 16:19:47,634 - main - INFO - Endpoints da API disponíveis em: /api/
 2025-06-14 16:19:47,634 - main - INFO - Health check disponível em: /api/health
+2025-06-14 16:31:29,125 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 16:31:29,125 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 16:31:29,125 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 16:31:29,125 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 16:31:29,206 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 16:31:29,207 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 16:31:29,208 - main - INFO - Health check disponível em: /api/health
+2025-06-14 16:31:30,265 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 16:31:30,265 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 16:31:30,265 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 16:31:30,265 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 16:31:30,302 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 16:31:30,303 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 16:31:30,303 - main - INFO - Health check disponível em: /api/health
+2025-06-14 16:32:05,167 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 16:32:05,167 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 16:32:05,167 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 16:32:05,167 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 16:32:05,200 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 16:32:05,200 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 16:32:05,200 - main - INFO - Health check disponível em: /api/health
+2025-06-14 18:45:02,243 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 18:45:02,244 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 18:45:02,244 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 18:45:02,244 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 18:45:02,320 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 18:45:02,320 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 18:45:02,321 - main - INFO - Health check disponível em: /api/health
+2025-06-14 18:48:15,612 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 18:48:15,613 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 18:48:15,613 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 18:48:15,613 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 18:48:15,736 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 18:48:15,737 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 18:48:15,737 - main - INFO - Health check disponível em: /api/health
+2025-06-14 18:48:35,195 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 18:48:35,195 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 18:48:35,195 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 18:48:35,196 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 18:48:35,293 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 18:48:35,294 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 18:48:35,294 - main - INFO - Health check disponível em: /api/health
+2025-06-14 18:48:49,433 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 18:48:49,433 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 18:48:49,433 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 18:48:49,433 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 18:48:49,556 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 18:48:49,556 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 18:48:49,557 - main - INFO - Health check disponível em: /api/health
+2025-06-14 18:49:43,188 - SalasTech.app.core.middlewares.cors - INFO - CORS configured for origins: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']
+2025-06-14 18:49:43,189 - main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-14 18:49:43,189 - main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-14 18:49:43,189 - main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-14 18:49:43,244 - main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-14 18:49:43,245 - main - INFO - Endpoints da API disponíveis em: /api/
+2025-06-14 18:49:43,245 - main - INFO - Health check disponível em: /api/health

@@ -13,7 +13,7 @@ from SalasTech.app.exceptions.scheme import AppException
 
 
 router = APIRouter(
-    prefix="/reservations",
+    #prefix="/reservations",
     tags=["Reservations"]
 )
 

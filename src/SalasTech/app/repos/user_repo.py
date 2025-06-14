@@ -10,11 +10,11 @@ def add(user: UsuarioDb)-> UsuarioDb:
 def update(user: UsuarioDb) -> None:
     with session_maker.begin() as session:
         session.query(UsuarioDb).filter(UsuarioDb.id == user.id).update({
-            UsuarioDb.name: user.name,
-            UsuarioDb.surname: user.surname,
-            UsuarioDb.role: user.role,
+            UsuarioDb.nome: user.nome,
+            UsuarioDb.sobrenome: user.sobrenome,
+            UsuarioDb.papel: user.papel,
             UsuarioDb.email: user.email,
-            UsuarioDb.password: user.password
+            UsuarioDb.senha: user.senha
         })
 
 def delete(id: int) -> None:

@@ -1,5 +1,8 @@
 """CLI principal para gerenciamento do sistema."""
+import os
+import sys
 import typer
+from pathlib import Path
 from rich import print
 from rich.console import Console
 from rich.table import Table
@@ -51,9 +54,17 @@ def callback(
     Uma interface de linha de comando para gerenciar o sistema SalsTech.
     Use --help com qualquer comando para ver opções detalhadas.
     """
-    # Garante que o banco de dados está criado
+    # Garante que estamos no diretório correto do projeto
     try:
-        db_context.auto_create_db()
+        # Encontra o diretório raiz do projeto (onde está o db.sqlite)
+        current_file = Path(__file__).resolve()
+        project_root = current_file.parent.parent.parent.parent  # /home/user/projects/SalasTech-backend
+        
+        # Muda para o diretório raiz do projeto
+        os.chdir(project_root)
+        
+        # Garante que o banco de dados está acessível
+        db_context.auto_criar_banco_dados()
     except Exception as e:
         console.print(Panel(
             f"[red]Erro ao conectar ao banco de dados:[/red]\n{str(e)}",

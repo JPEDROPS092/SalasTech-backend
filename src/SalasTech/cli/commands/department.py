@@ -26,9 +26,9 @@ def list_departments():
         for dept in departments:
             table.add_row(
                 str(dept.id),
-                dept.name,
-                dept.code,
-                dept.description or "N/A"
+                dept.nome,
+                dept.codigo,
+                dept.descricao or "N/A"
             )
         
         console.print(table)
@@ -45,14 +45,14 @@ def create_department():
         description = Prompt.ask("Descrição (opcional)", default="")
         manager_id = Prompt.ask("ID do gerente (opcional)", default=None)
         
-        dept_dto = dto.DepartmentCreate(
-            name=name,
-            code=code,
-            description=description if description else None,
-            manager_id=int(manager_id) if manager_id else None
+        dept_dto = dto.DepartamentoCriarDTO(
+            nome=name,
+            codigo=code,
+            descricao=description if description else None,
+            gerente_id=int(manager_id) if manager_id else None
         )
         
-        dept = department_service.create(dept_dto)
+        dept = department_service.create_department(dept_dto)
         console.print(f"[green]Departamento criado com sucesso![/green] ID: {dept.id}")
         
     except Exception as e:
@@ -70,12 +70,12 @@ def get_department(id: int = typer.Argument(..., help="ID do departamento")):
         table.add_column("Valor", style="green")
         
         table.add_row("ID", str(dept.id))
-        table.add_row("Nome", dept.name)
-        table.add_row("Código", dept.code)
-        table.add_row("Descrição", dept.description or "N/A")
-        table.add_row("Gerente", str(dept.manager_id) if dept.manager_id else "N/A")
-        table.add_row("Criado em", dept.created_at.strftime("%Y-%m-%d %H:%M:%S"))
-        table.add_row("Atualizado em", dept.updated_at.strftime("%Y-%m-%d %H:%M:%S"))
+        table.add_row("Nome", dept.nome)
+        table.add_row("Código", dept.codigo)
+        table.add_row("Descrição", dept.descricao or "N/A")
+        table.add_row("Gerente", str(dept.gerente_id) if dept.gerente_id else "N/A")
+        table.add_row("Criado em", dept.criado_em.strftime("%Y-%m-%d %H:%M:%S"))
+        table.add_row("Atualizado em", dept.atualizado_em.strftime("%Y-%m-%d %H:%M:%S"))
         
         console.print(table)
     except Exception as e:
@@ -87,7 +87,7 @@ def delete_department(id: int = typer.Argument(..., help="ID do departamento")):
     """Exclui um departamento do sistema."""
     try:
         if Confirm.ask(f"Tem certeza que deseja excluir o departamento {id}?"):
-            department_service.delete(id)
+            department_service.delete_department(id)
             console.print(f"[green]Departamento {id} excluído com sucesso![/green]")
     except Exception as e:
         console.print(f"[red]Erro ao excluir departamento:[/red] {e}")
@@ -99,20 +99,20 @@ def update_department(id: int = typer.Argument(..., help="ID do departamento")):
     try:
         dept = department_service.get_by_id(id)
         
-        print(f"[blue]Departamento atual:[/blue] {dept.name} ({dept.code})")
-        name = Prompt.ask("Novo nome", default=dept.name)
-        code = Prompt.ask("Novo código", default=dept.code)
-        description = Prompt.ask("Nova descrição", default=dept.description or "")
-        manager_id = Prompt.ask("Novo ID do gerente", default=str(dept.manager_id) if dept.manager_id else "")
+        print(f"[blue]Departamento atual:[/blue] {dept.nome} ({dept.codigo})")
+        name = Prompt.ask("Novo nome", default=dept.nome)
+        code = Prompt.ask("Novo código", default=dept.codigo)
+        description = Prompt.ask("Nova descrição", default=dept.descricao or "")
+        manager_id = Prompt.ask("Novo ID do gerente", default=str(dept.gerente_id) if dept.gerente_id else "")
         
-        dept_dto = dto.DepartmentCreate(
-            name=name,
-            code=code,
-            description=description if description else None,
-            manager_id=int(manager_id) if manager_id else None
+        dept_dto = dto.DepartamentoCriarDTO(
+            nome=name,
+            codigo=code,
+            descricao=description if description else None,
+            gerente_id=int(manager_id) if manager_id else None
         )
         
-        department_service.update(id, dept_dto)
+        department_service.update_department(id, dept_dto)
         console.print(f"[green]Departamento atualizado com sucesso![/green]")
     except Exception as e:
         console.print(f"[red]Erro ao atualizar departamento:[/red] {e}")
