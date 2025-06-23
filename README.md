@@ -62,20 +62,13 @@ A documentação completa está disponível no diretório `docs/`:
    cp .env.example .env
    # Edite o arquivo .env com suas configurações
    ```
-5. Inicialize o banco de dados:
-
-   ```bash
-   cd src/SalasTech/app
-   python db_init.py
-   ```
-6. Inicie o servidor:
+5. Inicie o servidor:
 
    ```bash
    uvicorn main:app --reload
    ```
-7. Acesse a aplicação:
+6. Acesse a aplicação:
 
-   - Interface Web: http://localhost:8000
    - API: http://localhost:8000/api
    - Documentação da API: http://localhost:8000/api/docs
 
