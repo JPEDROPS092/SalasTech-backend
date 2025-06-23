@@ -2,3 +2,4 @@
 #db.sqlite
 env/
 __pycache__/
+src/SalasTech/app/logs/salastech.log

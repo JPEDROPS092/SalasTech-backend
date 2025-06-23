@@ -81,7 +81,7 @@ A documentação completa está disponível no diretório `docs/`:
 
 ## Uso da CLI
 
-Após a instalação, a CLI estará disponível:
+* [ ] Após a instalação, a CLI estará disponível:
 
 ```bash
 # Ver comandos disponíveis
