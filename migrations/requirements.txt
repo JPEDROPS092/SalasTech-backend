@@ -1,0 +1,9 @@
+# Dependências para migrações de banco de dados
+alembic>=1.16.0
+sqlalchemy>=2.0.0
+sqlalchemy-utils>=0.41.2
+# Para funcionalidades avançadas
+python-dateutil>=2.8.2
+# Para backup e restore
+backports.zoneinfo>=0.2.1;python_version<"3.9"
+tzdata>=2024.1

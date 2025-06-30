@@ -18,14 +18,17 @@ Data: Junho 2025
 Versão: 1.0.0
 """
 
-from fastapi import FastAPI
+import os
 import logging
+from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.middleware.cors import CORSMiddleware
 
 # Importações do núcleo da aplicação
 from app.core.lifespan import lifespan
+
+# Importação do painel administrativo
+from app.admin.config import setup_admin_routes
 
 # Importações dos controladores da API
 from app.controllers.api import (
@@ -36,10 +39,12 @@ from app.controllers.api import (
     report_controller          # Controlador de relatórios
 )
 
-# Novo controlador de autenticação para React
+# Controlador de autenticação
 from app.controllers.api.auth import router as auth_router
 
 # Configuração do sistema de logs
+os.makedirs("logs", exist_ok=True)  # Criar diretório de logs se não existir
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -50,7 +55,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def esquema_openapi_personalizado():
+def custom_openapi():
     """
     Personaliza a documentação OpenAPI com informações específicas do projeto.
     
@@ -88,7 +93,7 @@ def esquema_openapi_personalizado():
         
         A API utiliza autenticação JWT (JSON Web Token). Para acessar endpoints protegidos:
         
-        1. Faça login através do endpoint `/api/auth/login`
+        1. Faça login através do endpoint `/auth/login`
         2. Use o token retornado no header `Authorization: Bearer <seu_token>`
         3. O token é válido por 24 horas por padrão
         
@@ -119,6 +124,11 @@ def esquema_openapi_personalizado():
     
     # Adiciona tags organizacionais com descrições detalhadas para melhor navegação na documentação
     openapi_schema["tags"] = [
+        {
+            "name": "Sistema",
+            "description": "Endpoints de monitoramento e saúde do sistema. "
+                          "Inclui verificação de status e informações da aplicação.",
+        },
         {
             "name": "Autenticação",
             "description": "Operações de login, logout e gerenciamento de tokens JWT. "
@@ -161,15 +171,9 @@ app = FastAPI(
     description="API para o Sistema de Gerenciamento de Salas do Instituto Federal do Amazonas",
     version="1.0.0",
     lifespan=lifespan,
-    docs_url=None,  # Desabilita o Swagger UI padrão para usar versão customizada
-    redoc_url=None  # Desabilita o ReDoc padrão para usar versão customizada
-)
-
-# Configuração da sub-aplicação API
-api = FastAPI(
-    title="SalasTech API",
-    description="Endpoints da API do Sistema de Gerenciamento de Salas do IFAM",
-    version="1.0.0",
+    openapi_url="/openapi.json",  # URL padrão para o esquema OpenAPI
+    docs_url="/docs",             # URL padrão para a documentação Swagger
+    redoc_url="/redoc"           # URL padrão para a documentação ReDoc
 )
 
 # Configuração do middleware CORS
@@ -181,88 +185,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Endpoints personalizados para documentação
-@app.get("/docs", include_in_schema=False)
-async def interface_swagger_personalizada():
-    """
-    Endpoint que serve a interface Swagger UI customizada.
-    
-    Fornece uma versão personalizada do Swagger UI com:
-    - Tema e cores do IFAM
-    - Links para recursos externos
-    - Favicon personalizado
-    
-    Returns:
-        HTMLResponse: Interface Swagger UI customizada
-    """
-    return get_swagger_ui_html(
-        openapi_url="/api/openapi.json",
-        title="SalasTech - Documentação da API",
-        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
-        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
-        swagger_favicon_url="/static/favicon.ico"
-    )
-
-
-@app.get("/redoc", include_in_schema=False)
-async def interface_redoc():
-    """
-    Endpoint que serve a interface ReDoc alternativa.
-    
-    Fornece uma interface de documentação alternativa ao Swagger UI,
-    com foco em legibilidade e organização hierárquica dos endpoints.
-    
-    Returns:
-        HTMLResponse: Interface ReDoc personalizada
-    """
-    return get_redoc_html(
-        openapi_url="/api/openapi.json",
-        title="SalasTech - Documentação ReDoc",
-        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js",
-    )
-
-
-
-
-# Log de inicialização com informações de segurança
-logger.info("Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM")
-logger.info("Segurança aplicada: CORS, JWT Authentication, Bearer Tokens")
-logger.info("Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)")
-
-# Registro dos routers da API com prefixos e tags apropriadas
-api.include_router(
-    auth_router,
-    tags=["Autenticação"]
+# Adicionar middleware de sessão para o painel administrativo
+from starlette.middleware.sessions import SessionMiddleware
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SECRET_KEY", "salastech-admin-secret-key-change-in-production"),
+    max_age=3600 * 24,  # 24 horas
+    same_site="lax",
+    https_only=False,  # Mudar para True em produção com HTTPS
 )
-api.include_router(
-    user_controller.router,
-    prefix="/users",
-    tags=["Usuários"]
-)
-api.include_router(
-    room_controller.router,
-    prefix="/rooms",
-    tags=["Salas"]
-)
-api.include_router(
-    reservation_controller.router,
-    prefix="/reservations",
-    tags=["Reservas"]
-)
-api.include_router(
-    department_controller.router,
-    prefix="/departments",
-    tags=["Departamentos"]
-)
-api.include_router(
-    report_controller.router,
-    prefix="/reports",
-    tags=["Relatórios"]
-)
-
 
 # Endpoint de health check
-@api.get("/health", tags=["Sistema"])
+@app.get("/health", tags=["Sistema"])
 async def health_check():
     """
     Endpoint de verificação de saúde da aplicação
@@ -277,14 +211,61 @@ async def health_check():
         "message": "Sistema funcionando corretamente"
     }
 
+# Endpoint da raiz da aplicação
+@app.get("/", tags=["Sistema"])
+async def root():
+    """
+    Endpoint raiz da aplicação
+    
+    Returns:
+        dict: Informações básicas da API
+    """
+    return {
+        "message": "SalasTech API - Sistema de Gerenciamento de Salas IFAM",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "admin": "/admin",
+        "health": "/health"
+    }
 
-# Montagem da API como sub-aplicação
-app.mount("/api", api)
+# Log de inicialização com informações de segurança
+logger.info("Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM")
+logger.info("Segurança aplicada: CORS, JWT Authentication, Bearer Tokens")
+logger.info("Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)")
+
+# Configurar painel administrativo PRIMEIRO
+setup_admin_routes(app)
+
+# Registro dos routers da API com prefixos e tags apropriadas
+app.include_router(
+    auth_router,
+    tags=["Autenticação"]
+)
+app.include_router(
+    user_controller.router,
+    tags=["Usuários"]
+)
+app.include_router(
+    room_controller.router,
+    tags=["Salas"]
+)
+app.include_router(
+    reservation_controller.router,
+    tags=["Reservas"]
+)
+app.include_router(
+    department_controller.router,
+    tags=["Departamentos"]
+)
+app.include_router(
+    report_controller.router,
+    tags=["Relatórios"]
+)
 
 # Configuração do esquema OpenAPI personalizado
-app.openapi = esquema_openapi_personalizado
+app.openapi = custom_openapi
 
 # Log de conclusão da inicialização
 logger.info("Aplicação SalasTech iniciada com sucesso!")
-logger.info("Endpoints da API disponíveis em: /api/")
-logger.info("Health check disponível em: /api/health")
+logger.info("Endpoints da API disponíveis diretamente na raiz")
+logger.info("Health check disponível em: /health")

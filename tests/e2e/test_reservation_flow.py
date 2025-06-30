@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 import uuid
 from fastapi.testclient import TestClient
-from SalasTech.app.models.enums import ReservationStatus
+from app.models.enums import ReservationStatus
 
 @pytest.mark.e2e
 class TestReservationFlow:
@@ -90,7 +90,7 @@ class TestReservationFlow:
         )
         assert response.status_code == 200
         approved_reservation = response.json()
-        assert approved_reservation["status"] == ReservationStatus.APROVADA.value
+        assert approved_reservation["status"] == ReservationStatus.CONFIRMADA.value
         
         # Step 6: User views their approved reservation
         response = client.get(
@@ -108,7 +108,7 @@ class TestReservationFlow:
                 break
                 
         assert found_reservation is not None
-        assert found_reservation["status"] == ReservationStatus.APROVADA.value
+        assert found_reservation["status"] == ReservationStatus.CONFIRMADA.value
         
         # Step 7: User cancels the reservation
         response = client.put(
@@ -248,3 +248,315 @@ class TestReservationFlow:
         
         # Should succeed
         assert response.status_code == 201
+
+    def test_multi_user_reservation_flow(self, client: TestClient, db_session, auth_headers):
+        """Test reservation flow with multiple users and different roles."""
+        # Step 1: Create multiple reservations by different users
+        now = datetime.now()
+        
+        # User 1 creates a reservation
+        start_date_1 = (now + timedelta(days=4)).strftime("%Y-%m-%dT%H:%M:%S")
+        end_date_1 = (now + timedelta(days=4, hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+        
+        # Get available rooms
+        response = client.get(
+            "/api/rooms/available",
+            params={"start_datetime": start_date_1, "end_datetime": end_date_1},
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        available_rooms = response.json()
+        assert len(available_rooms) > 0
+        room_id = available_rooms[0]["id"]
+        
+        # Get current user ID
+        response = client.get("/api/users/me", headers=auth_headers)
+        assert response.status_code == 200
+        user_1_id = response.json()["id"]
+        
+        # Create first reservation
+        reservation_data_1 = {
+            "room_id": room_id,
+            "user_id": user_1_id,
+            "title": f"Multi-user Test 1 {now.strftime('%Y%m%d%H%M%S')}",
+            "description": "First reservation in multi-user test",
+            "start_datetime": start_date_1,
+            "end_datetime": end_date_1,
+            "status": ReservationStatus.PENDENTE.value
+        }
+        
+        response = client.post(
+            "/api/reservations",
+            json=reservation_data_1,
+            headers=auth_headers
+        )
+        assert response.status_code == 201
+        reservation_1_id = response.json()["id"]
+        
+        # Step 2: Another user tries to reserve same room at different time
+        start_date_2 = (now + timedelta(days=4, hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+        end_date_2 = (now + timedelta(days=4, hours=3)).strftime("%Y-%m-%dT%H:%M:%S")
+        
+        reservation_data_2 = {
+            "room_id": room_id,
+            "user_id": user_1_id,  # Same user for simplicity in this test
+            "title": f"Multi-user Test 2 {now.strftime('%Y%m%d%H%M%S')}",
+            "description": "Second reservation in multi-user test",
+            "start_datetime": start_date_2,
+            "end_datetime": end_date_2,
+            "status": ReservationStatus.PENDENTE.value
+        }
+        
+        response = client.post(
+            "/api/reservations",
+            json=reservation_data_2,
+            headers=auth_headers
+        )
+        assert response.status_code == 201
+        reservation_2_id = response.json()["id"]
+        
+        # Step 3: Approve first reservation
+        response = client.put(
+            f"/api/reservations/{reservation_1_id}/approve",
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        
+        # Step 4: Verify both reservations exist but only first is approved
+        response = client.get(f"/api/reservations/{reservation_1_id}", headers=auth_headers)
+        assert response.status_code == 200
+        assert response.json()["status"] == ReservationStatus.CONFIRMADA.value
+        
+        response = client.get(f"/api/reservations/{reservation_2_id}", headers=auth_headers)
+        assert response.status_code == 200
+        assert response.json()["status"] == ReservationStatus.PENDENTE.value
+        
+        # Step 5: Approve second reservation
+        response = client.put(
+            f"/api/reservations/{reservation_2_id}/approve",
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        
+        # Step 6: Verify room utilization
+        response = client.get(
+            f"/api/rooms/{room_id}/utilization",
+            params={
+                "start_date": (now + timedelta(days=4)).strftime("%Y-%m-%d"),
+                "end_date": (now + timedelta(days=4)).strftime("%Y-%m-%d")
+            },
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        utilization = response.json()
+        assert utilization["total_hours"] >= 3  # Both reservations total 3 hours
+
+    def test_reservation_validation_rules(self, client: TestClient, db_session, auth_headers):
+        """Test various reservation validation rules."""
+        now = datetime.now()
+        
+        # Get user ID
+        response = client.get("/api/users/me", headers=auth_headers)
+        assert response.status_code == 200
+        user_id = response.json()["id"]
+        
+        # Get available rooms
+        response = client.get(
+            "/api/rooms/available",
+            params={
+                "start_datetime": (now + timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%S"),
+                "end_datetime": (now + timedelta(days=5, hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+            },
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        available_rooms = response.json()
+        assert len(available_rooms) > 0
+        room_id = available_rooms[0]["id"]
+        
+        # Test 1: Past date reservation (should fail)
+        past_start = (now - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S")
+        past_end = (now - timedelta(hours=23)).strftime("%Y-%m-%dT%H:%M:%S")
+        
+        past_reservation_data = {
+            "room_id": room_id,
+            "user_id": user_id,
+            "title": "Past Date Test",
+            "description": "This should fail",
+            "start_datetime": past_start,
+            "end_datetime": past_end,
+            "status": ReservationStatus.PENDENTE.value
+        }
+        
+        response = client.post(
+            "/api/reservations",
+            json=past_reservation_data,
+            headers=auth_headers
+        )
+        assert response.status_code in [400, 422]  # Should be rejected
+        
+        # Test 2: End time before start time (should fail)
+        future_start = (now + timedelta(days=6, hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+        future_end = (now + timedelta(days=6, hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+        
+        invalid_time_data = {
+            "room_id": room_id,
+            "user_id": user_id,
+            "title": "Invalid Time Test",
+            "description": "End before start",
+            "start_datetime": future_start,
+            "end_datetime": future_end,
+            "status": ReservationStatus.PENDENTE.value
+        }
+        
+        response = client.post(
+            "/api/reservations",
+            json=invalid_time_data,
+            headers=auth_headers
+        )
+        assert response.status_code in [400, 422]  # Should be rejected
+        
+        # Test 3: Valid reservation (should succeed)
+        valid_start = (now + timedelta(days=6)).strftime("%Y-%m-%dT%H:%M:%S")
+        valid_end = (now + timedelta(days=6, hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+        
+        valid_reservation_data = {
+            "room_id": room_id,
+            "user_id": user_id,
+            "title": "Valid Reservation Test",
+            "description": "This should work",
+            "start_datetime": valid_start,
+            "end_datetime": valid_end,
+            "status": ReservationStatus.PENDENTE.value
+        }
+        
+        response = client.post(
+            "/api/reservations",
+            json=valid_reservation_data,
+            headers=auth_headers
+        )
+        assert response.status_code == 201
+        
+        # Test 4: Missing required fields (should fail)
+        incomplete_data = {
+            "room_id": room_id,
+            "title": "Incomplete Data",
+            # Missing user_id, start_datetime, end_datetime
+        }
+        
+        response = client.post(
+            "/api/reservations",
+            json=incomplete_data,
+            headers=auth_headers
+        )
+        assert response.status_code in [400, 422]  # Should be rejected
+        
+        # Test 5: Non-existent room (should fail)
+        nonexistent_room_data = {
+            "room_id": 99999,  # Non-existent room ID
+            "user_id": user_id,
+            "title": "Non-existent Room Test",
+            "description": "This should fail",
+            "start_datetime": valid_start,
+            "end_datetime": valid_end,
+            "status": ReservationStatus.PENDENTE.value
+        }
+        
+        response = client.post(
+            "/api/reservations",
+            json=nonexistent_room_data,
+            headers=auth_headers
+        )
+        assert response.status_code in [400, 404]  # Should be rejected
+
+    def test_reservation_reporting_flow(self, client: TestClient, db_session, auth_headers):
+        """Test reservation reporting and statistics flow."""
+        now = datetime.now()
+        
+        # Create several reservations for reporting
+        response = client.get("/api/users/me", headers=auth_headers)
+        assert response.status_code == 200
+        user_id = response.json()["id"]
+        
+        # Get available rooms
+        response = client.get(
+            "/api/rooms/available",
+            params={
+                "start_datetime": (now + timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%S"),
+                "end_datetime": (now + timedelta(days=7, hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+            },
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        available_rooms = response.json()
+        assert len(available_rooms) > 0
+        
+        # Create multiple reservations
+        reservation_ids = []
+        for i in range(3):
+            start_time = now + timedelta(days=7+i, hours=i)
+            end_time = start_time + timedelta(hours=1)
+            
+            reservation_data = {
+                "room_id": available_rooms[0]["id"],
+                "user_id": user_id,
+                "title": f"Report Test Reservation {i+1}",
+                "description": f"Reservation for reporting test {i+1}",
+                "start_datetime": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "end_datetime": end_time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "status": ReservationStatus.PENDENTE.value
+            }
+            
+            response = client.post(
+                "/api/reservations",
+                json=reservation_data,
+                headers=auth_headers
+            )
+            assert response.status_code == 201
+            reservation_ids.append(response.json()["id"])
+        
+        # Approve some reservations
+        for reservation_id in reservation_ids[:2]:
+            response = client.put(
+                f"/api/reservations/{reservation_id}/approve",
+                headers=auth_headers
+            )
+            assert response.status_code == 200
+        
+        # Test usage report
+        response = client.get(
+            "/api/reports/usage",
+            params={
+                "start_date": (now + timedelta(days=7)).strftime("%Y-%m-%d"),
+                "end_date": (now + timedelta(days=10)).strftime("%Y-%m-%d")
+            },
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        usage_report = response.json()
+        assert "total_reservations" in usage_report
+        assert usage_report["total_reservations"] >= 3
+        
+        # Test user activity report
+        response = client.get(
+            "/api/reports/user-activity",
+            params={
+                "user_id": user_id,
+                "start_date": (now + timedelta(days=7)).strftime("%Y-%m-%d"),
+                "end_date": (now + timedelta(days=10)).strftime("%Y-%m-%d")
+            },
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        activity_report = response.json()
+        assert "user_id" in activity_report
+        assert activity_report["user_id"] == user_id
+        
+        # Test statistics endpoint
+        response = client.get("/api/reports/statistics", headers=auth_headers)
+        assert response.status_code == 200
+        statistics = response.json()
+        assert "total_users" in statistics
+        assert "total_rooms" in statistics
+        assert "total_reservations" in statistics
+        assert "active_reservations" in statistics

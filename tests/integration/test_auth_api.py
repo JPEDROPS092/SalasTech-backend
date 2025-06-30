@@ -5,159 +5,248 @@ Integration tests for authentication API endpoints.
 import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
-from SalasTech.app.core.security import csrf
-from SalasTech.app.models.enums import UserRole
+from app.models.enums import UserRole
+from app.models.db import UsuarioDb
+from app.core.security.password import PasswordManager
+import uuid
 
 @pytest.mark.integration
 class TestAuthAPI:
     """Integration tests for authentication API endpoints."""
     
-    def test_login_endpoint(self, client: TestClient, db_session):
-        """Test the login endpoint."""
-        # First get the login page to get a CSRF token
-        response = client.get("/login")
-        assert response.status_code == 200
+    def create_test_user(self, db_session, email="test@example.com", password="testpassword123"):
+        """Helper method to create a test user."""
+        # Create a test department if it doesn't exist
+        from app.models.db import DepartamentoDb
+        department = db_session.query(DepartamentoDb).first()
+        if not department:
+            department = DepartamentoDb(
+                nome="Test Department",
+                codigo="TEST",
+                descricao="Test department for integration tests"
+            )
+            db_session.add(department)
+            db_session.commit()
         
-        # Extract CSRF token from response cookies
-        csrf_cookie = response.cookies.get(csrf.CSRF_COOKIE_NAME)
-        assert csrf_cookie is not None
+        # Create test user
+        hashed_password = PasswordManager.hash_password(password)
+        user = UsuarioDb(
+            nome="Test",
+            sobrenome="User",
+            email=email,
+            senha=hashed_password,
+            papel=UserRole.USER,
+            departamento_id=department.id
+        )
+        db_session.add(user)
+        db_session.commit()
+        return user
+    
+    def test_login_endpoint_success(self, client: TestClient, db_session):
+        """Test successful login."""
+        # Create test user
+        email = "testuser@example.com"
+        password = "testpassword123"
+        self.create_test_user(db_session, email, password)
         
-        # Attempt login with valid credentials
+        # Login data
         login_data = {
-            "username": "admin@example.com",  # This should match a user in your test database
-            "password": "admin123",
-            csrf.CSRF_FORM_FIELD: csrf_cookie
+            "email": email,
+            "password": password
         }
         
-        headers = {
-            "Cookie": f"{csrf.CSRF_COOKIE_NAME}={csrf_cookie}"
-        }
+        # Make login request
+        response = client.post("/auth/login", json=login_data)
         
-        response = client.post("/api/auth/login", data=login_data, headers=headers)
-        
-        # Check response
+        # Verify response
         assert response.status_code == 200
-        assert "access_token" in response.json()
-        assert response.json()["token_type"] == "bearer"
+        response_data = response.json()
+        assert "access_token" in response_data
+        assert "refresh_token" in response_data
+        assert response_data["token_type"] == "bearer"
+        assert "expires_in" in response_data
     
-    def test_login_rate_limiting(self, client: TestClient, db_session, monkeypatch):
-        """Test rate limiting on login endpoint."""
-        # Re-enable rate limiting for this test
-        from app.core.security.rate_limiter import RateLimiter
-        
-        # Mock the rate limiter to allow only 2 attempts
-        original_check = RateLimiter.check_login_rate_limit
-        
-        attempt_count = 0
-        def mock_check_rate_limit(*args, **kwargs):
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count > 2:
-                from fastapi import HTTPException
-                raise HTTPException(status_code=429, detail="Rate limit exceeded")
-        
-        monkeypatch.setattr(RateLimiter, "check_login_rate_limit", mock_check_rate_limit)
-        
-        # Get CSRF token
-        response = client.get("/login")
-        csrf_cookie = response.cookies.get(csrf.CSRF_COOKIE_NAME)
-        
-        # Attempt login with invalid credentials multiple times
+    def test_login_endpoint_invalid_email(self, client: TestClient, db_session):
+        """Test login with invalid email."""
         login_data = {
-            "username": "test@example.com",
-            "password": "wrongpassword",
-            csrf.CSRF_FORM_FIELD: csrf_cookie
+            "email": "nonexistent@example.com",
+            "password": "anypassword"
         }
         
-        headers = {
-            "Cookie": f"{csrf.CSRF_COOKIE_NAME}={csrf_cookie}"
-        }
+        response = client.post("/auth/login", json=login_data)
         
-        # First two attempts should return 401 (unauthorized)
-        for _ in range(2):
-            response = client.post("/api/auth/login", data=login_data, headers=headers)
-            assert response.status_code == 401
-        
-        # Third attempt should be rate limited
-        response = client.post("/api/auth/login", data=login_data, headers=headers)
-        assert response.status_code == 429
-        
-        # Restore original rate limiter
-        monkeypatch.setattr(RateLimiter, "check_login_rate_limit", original_check)
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Invalid email or password"
     
-    def test_csrf_protection(self, client: TestClient, db_session):
-        """Test CSRF protection on login endpoint."""
-        # Attempt login without CSRF token
+    def test_login_endpoint_invalid_password(self, client: TestClient, db_session):
+        """Test login with invalid password."""
+        # Create test user
+        email = "testuser2@example.com" 
+        password = "testpassword123"
+        self.create_test_user(db_session, email, password)
+        
+        # Try login with wrong password
         login_data = {
-            "username": "admin@example.com",
-            "password": "admin123"
+            "email": email,
+            "password": "wrongpassword"
         }
         
-        response = client.post("/api/auth/login", data=login_data)
+        response = client.post("/auth/login", json=login_data)
         
-        # Should be rejected due to missing CSRF token
-        assert response.status_code == 403
-        
-        # Now try with invalid CSRF token
-        login_data[csrf.CSRF_FORM_FIELD] = "invalid_token"
-        headers = {
-            "Cookie": f"{csrf.CSRF_COOKIE_NAME}=invalid_token"
-        }
-        
-        response = client.post("/api/auth/login", data=login_data, headers=headers)
-        
-        # Should be rejected due to invalid CSRF token
-        assert response.status_code == 403
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Invalid email or password"
     
-    def test_register_endpoint(self, client: TestClient, db_session):
-        """Test the registration endpoint."""
-        # First get the register page to get a CSRF token
-        response = client.get("/register")
+    def test_refresh_token_endpoint(self, client: TestClient, db_session):
+        """Test token refresh endpoint."""
+        # Create test user and login first
+        email = "testuser3@example.com"
+        password = "testpassword123"
+        self.create_test_user(db_session, email, password)
+        
+        # Login to get tokens
+        login_data = {
+            "email": email,
+            "password": password
+        }
+        
+        login_response = client.post("/auth/login", json=login_data)
+        assert login_response.status_code == 200
+        
+        tokens = login_response.json()
+        refresh_token = tokens["refresh_token"]
+        
+        # Test token refresh
+        refresh_data = {
+            "refresh_token": refresh_token
+        }
+        
+        response = client.post("/auth/refresh", json=refresh_data)
+        
+        # Verify response
         assert response.status_code == 200
-        
-        # Extract CSRF token from response cookies
-        csrf_cookie = response.cookies.get(csrf.CSRF_COOKIE_NAME)
-        assert csrf_cookie is not None
-        
-        # Generate a unique email for this test
-        import uuid
-        unique_email = f"test-{uuid.uuid4()}@example.com"
-        
-        # Attempt registration with valid data
-        register_data = {
-            "name": "Test",
-            "surname": "User",
-            "email": unique_email,
-            "password": "securepassword123",
-            "confirmPassword": "securepassword123",
-            csrf.CSRF_FORM_FIELD: csrf_cookie
-        }
-        
-        headers = {
-            "Cookie": f"{csrf.CSRF_COOKIE_NAME}={csrf_cookie}"
-        }
-        
-        response = client.post("/register", data=register_data, headers=headers)
-        
-        # Check response - should be a redirect to login or success page
-        assert response.status_code in [200, 302]
-        
-        # Verify the user was created in the database
-        from app.services.user_service import UserService
-        user_service = UserService(db_session)
-        created_user = user_service.get_by_email(unique_email)
-        assert created_user is not None
-        assert created_user.email == unique_email
+        response_data = response.json()
+        assert "access_token" in response_data
+        assert "refresh_token" in response_data
+        assert response_data["token_type"] == "bearer"
     
-    def test_logout_endpoint(self, client: TestClient, auth_headers):
-        """Test the logout endpoint."""
-        # First login to get a session
-        response = client.get("/logout", headers=auth_headers)
+    def test_refresh_token_invalid(self, client: TestClient):
+        """Test refresh with invalid token."""
+        refresh_data = {
+            "refresh_token": "invalid_token"
+        }
         
-        # Should redirect to home or login page
-        assert response.status_code in [200, 302]
+        response = client.post("/auth/refresh", json=refresh_data)
         
-        # Check that session cookie is cleared
-        assert "Set-Cookie" in response.headers
-        cookie_header = response.headers["Set-Cookie"]
-        assert "Max-Age=0" in cookie_header or "Expires" in cookie_header
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Invalid or expired refresh token"
+    
+    def test_get_profile_endpoint(self, client: TestClient, db_session):
+        """Test get user profile endpoint."""
+        # Create test user and login
+        email = "testuser4@example.com"
+        password = "testpassword123"
+        user = self.create_test_user(db_session, email, password)
+        
+        # Login to get token
+        login_data = {
+            "email": email,
+            "password": password
+        }
+        
+        login_response = client.post("/auth/login", json=login_data)
+        assert login_response.status_code == 200
+        
+        tokens = login_response.json()
+        access_token = tokens["access_token"]
+        
+        # Get profile
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        response = client.get("/auth/me", headers=headers)
+        
+        # Verify response
+        assert response.status_code == 200
+        profile_data = response.json()
+        assert profile_data["email"] == email
+        assert profile_data["name"] == user.nome
+        assert "id" in profile_data
+        assert "role" in profile_data
+    
+    def test_verify_token_endpoint(self, client: TestClient, db_session):
+        """Test token verification endpoint."""
+        # Create test user and login
+        email = "testuser5@example.com"
+        password = "testpassword123"
+        self.create_test_user(db_session, email, password)
+        
+        # Login to get token
+        login_data = {
+            "email": email,
+            "password": password
+        }
+        
+        login_response = client.post("/auth/login", json=login_data)
+        assert login_response.status_code == 200
+        
+        tokens = login_response.json()
+        access_token = tokens["access_token"]
+        
+        # Verify token
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        response = client.get("/auth/verify", headers=headers)
+        
+        # Verify response
+        assert response.status_code == 200
+        verify_data = response.json()
+        assert verify_data["valid"] is True
+        assert "user_id" in verify_data
+        assert "role" in verify_data
+    
+    def test_logout_endpoint(self, client: TestClient, db_session):
+        """Test logout endpoint."""
+        # Create test user and login
+        email = "testuser6@example.com"
+        password = "testpassword123"
+        self.create_test_user(db_session, email, password)
+        
+        # Login to get token
+        login_data = {
+            "email": email,
+            "password": password
+        }
+        
+        login_response = client.post("/auth/login", json=login_data)
+        assert login_response.status_code == 200
+        
+        tokens = login_response.json()
+        access_token = tokens["access_token"]
+        
+        # Logout
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        response = client.post("/auth/logout", headers=headers)
+        
+        # Verify response
+        assert response.status_code == 200
+        assert response.json()["message"] == "Successfully logged out"
+    
+    def test_protected_endpoint_without_token(self, client: TestClient):
+        """Test accessing protected endpoint without token."""
+        response = client.get("/auth/me")
+        assert response.status_code == 401
+    
+    def test_protected_endpoint_with_invalid_token(self, client: TestClient):
+        """Test accessing protected endpoint with invalid token."""
+        headers = {
+            "Authorization": "Bearer invalid_token"
+        }
+        
+        response = client.get("/auth/me", headers=headers)
+        assert response.status_code == 401

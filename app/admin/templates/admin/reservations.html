@@ -1,0 +1,244 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-calendar-check me-2 text-primary"></i>
+        {% if room_id %}
+            Reservas da Sala
+        {% else %}
+            Reservas
+        {% endif %}
+        <span class="badge bg-primary ms-2">{{ total }}</span>
+    </h1>
+    
+    <div class="d-flex gap-2">
+        {% if room_id %}
+            <a href="/admin/rooms/{{ room_id }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Voltar para Sala
+            </a>
+        {% endif %}
+        <button class="btn btn-success">
+            <i class="fas fa-plus me-1"></i>
+            Nova Reserva
+        </button>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            {% if room_id %}
+            <input type="hidden" name="room_id" value="{{ room_id }}">
+            {% endif %}
+            <div class="col-md-6">
+                <label class="form-label">Filtrar por Status</label>
+                <select name="status_filter" class="form-select">
+                    <option value="">Todos os status</option>
+                    {% for status in reservation_statuses %}
+                    <option value="{{ status }}" {% if status == status_filter %}selected{% endif %}>
+                        {% if status == 'PENDENTE' %}Pendente
+                        {% elif status == 'APROVADA' %}Aprovada
+                        {% elif status == 'RECUSADA' %}Recusada
+                        {% elif status == 'CANCELADA' %}Cancelada
+                        {% elif status == 'CONCLUIDA' %}Concluída
+                        {% else %}{{ status }}
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>
+                        Filtrar
+                    </button>
+                    {% if status_filter %}
+                    <a href="/admin/reservations{% if room_id %}?room_id={{ room_id }}{% endif %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Limpar
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Reservas -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if reservations %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Usuário</th>
+                        {% if not room_id %}
+                        <th>Sala</th>
+                        {% endif %}
+                        <th>Data/Hora</th>
+                        <th>Status</th>
+                        <th>Aprovada por</th>
+                        <th>Criado em</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in reservations %}
+                    <tr>
+                        <td>
+                            <div>
+                                <div class="fw-medium">{{ reservation.titulo }}</div>
+                                {% if reservation.descricao %}
+                                <small class="text-muted">{{ reservation.descricao[:50] }}{% if reservation.descricao|length > 50 %}...{% endif %}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                    {{ reservation.usuario.nome[0] }}{{ reservation.usuario.sobrenome[0] }}
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">{{ reservation.usuario.nome }} {{ reservation.usuario.sobrenome }}</div>
+                                    <small class="text-muted">{{ reservation.usuario.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        {% if not room_id %}
+                        <td>
+                            <div>
+                                <span class="fw-medium">{{ reservation.sala.nome }}</span>
+                                <br>
+                                <small class="text-muted">{{ reservation.sala.codigo }}</small>
+                            </div>
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div>
+                                <div class="fw-medium small">{{ reservation.inicio_data_hora.strftime('%d/%m/%Y') }}</div>
+                                <small class="text-muted">
+                                    {{ reservation.inicio_data_hora.strftime('%H:%M') }} - 
+                                    {{ reservation.fim_data_hora.strftime('%H:%M') }}
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            {% if reservation.status.name == 'PENDENTE' %}
+                                <span class="badge bg-warning">Pendente</span>
+                            {% elif reservation.status.name == 'APROVADA' %}
+                                <span class="badge bg-success">Aprovada</span>
+                            {% elif reservation.status.name == 'RECUSADA' %}
+                                <span class="badge bg-danger">Recusada</span>
+                            {% elif reservation.status.name == 'CANCELADA' %}
+                                <span class="badge bg-secondary">Cancelada</span>
+                            {% elif reservation.status.name == 'CONCLUIDA' %}
+                                <span class="badge bg-info">Concluída</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">{{ reservation.status.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reservation.aprovada_por_usuario %}
+                                <div>
+                                    <div class="fw-medium small">{{ reservation.aprovada_por_usuario.nome }} {{ reservation.aprovada_por_usuario.sobrenome }}</div>
+                                    {% if reservation.aprovado_em %}
+                                    <small class="text-muted">{{ reservation.aprovado_em.strftime('%d/%m/%Y') }}</small>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ reservation.criado_em.strftime('%d/%m/%Y %H:%M') }}
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" title="Ver Detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if reservation.status.name == 'PENDENTE' %}
+                                <button class="btn btn-outline-success" title="Aprovar">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" title="Recusar">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-outline-primary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Nenhuma reserva encontrada</h5>
+            {% if status_filter %}
+            <p class="text-muted">Tente ajustar os filtros</p>
+            <a href="/admin/reservations{% if room_id %}?room_id={{ room_id }}{% endif %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Voltar à lista completa
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Paginação -->
+{% if total_pages > 1 %}
+<nav aria-label="Paginação" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page - 1 }}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}{% if room_id %}&room_id={{ room_id }}{% endif %}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+            <li class="page-item active">
+                <span class="page-link">{{ p }}</span>
+            </li>
+            {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ p }}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}{% if room_id %}&room_id={{ room_id }}{% endif %}">{{ p }}</a>
+            </li>
+            {% elif p == 4 and page > 6 %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% elif p == total_pages - 3 and page < total_pages - 5 %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page < total_pages %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page + 1 }}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}{% if room_id %}&room_id={{ room_id }}{% endif %}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

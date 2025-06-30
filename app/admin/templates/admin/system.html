@@ -1,0 +1,125 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-cogs me-2 text-primary"></i>
+        Informações do Sistema
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active">Sistema</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    Informações do Servidor
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>Versão Python:</strong></td>
+                        <td>{{ system_info.python_version.split()[0] }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Plataforma:</strong></td>
+                        <td>{{ system_info.platform }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Banco de Dados:</strong></td>
+                        <td>{{ system_info.database }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total de Tabelas:</strong></td>
+                        <td>{{ system_info.total_tables }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>
+                    Ações do Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="window.open('/docs', '_blank')">
+                        <i class="fas fa-book me-2"></i>
+                        Documentação da API
+                    </button>
+                    <button class="btn btn-outline-info" onclick="window.open('/redoc', '_blank')">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Documentação ReDoc
+                    </button>
+                    <button class="btn btn-outline-success" onclick="checkHealth()">
+                        <i class="fas fa-heartbeat me-2"></i>
+                        Verificar Saúde do Sistema
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Monitoramento
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="health-status" class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Clique em "Verificar Saúde do Sistema" para obter o status atual.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function checkHealth() {
+    const statusDiv = document.getElementById('health-status');
+    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
+    statusDiv.className = 'alert alert-warning';
+    
+    try {
+        const response = await fetch('/health');
+        const data = await response.json();
+        
+        if (response.ok) {
+            statusDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Sistema Saudável:</strong> ${data.message}
+                <br><small>Versão: ${data.version} | Serviço: ${data.service}</small>
+            `;
+            statusDiv.className = 'alert alert-success';
+        } else {
+            throw new Error('Resposta não OK');
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Erro:</strong> Não foi possível verificar a saúde do sistema.
+        `;
+        statusDiv.className = 'alert alert-danger';
+    }
+}
+</script>
+{% endblock %}

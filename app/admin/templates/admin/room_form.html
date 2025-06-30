@@ -1,0 +1,171 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-door-open me-2 text-primary"></i>
+        {% if room %}Editar Sala{% else %}Nova Sala{% endif %}
+    </h1>
+    
+    <div class="d-flex gap-2">
+        <a href="/admin/rooms" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Voltar para Lista
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{% if room %}/admin/rooms/{{ room.id }}/edit{% else %}/admin/rooms/new{% endif %}">
+            {% if error_message %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                {{ error_message }}
+            </div>
+            {% endif %}
+            
+            <div class="row g-3">
+                <!-- Informações Básicas -->
+                <div class="col-md-6">
+                    <label for="nome" class="form-label">Nome da Sala <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nome" name="nome" 
+                           value="{{ room.nome if room else '' }}" required>
+                    <div class="form-text">Nome completo da sala (ex: Laboratório de Informática)</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="codigo" class="form-label">Código <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="codigo" name="codigo" 
+                           value="{{ room.codigo if room else '' }}" required>
+                    <div class="form-text">Código único para identificação da sala (ex: LAB-INF-01)</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="capacidade" class="form-label">Capacidade <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="capacidade" name="capacidade" 
+                               value="{{ room.capacidade if room else '' }}" min="1" required>
+                        <span class="input-group-text">pessoas</span>
+                    </div>
+                    <div class="form-text">Número máximo de pessoas que a sala comporta</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="departamento_id" class="form-label">Departamento <span class="text-danger">*</span></label>
+                    <select class="form-select" id="departamento_id" name="departamento_id" required>
+                        <option value="" disabled {% if not room %}selected{% endif %}>Selecione um departamento</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" 
+                                {% if room and room.departamento_id == dept.id %}selected{% endif %}>
+                            {{ dept.nome }} ({{ dept.codigo }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Departamento responsável pela sala</div>
+                </div>
+                
+                <!-- Localização -->
+                <div class="col-md-6">
+                    <label for="predio" class="form-label">Prédio <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="predio" name="predio" 
+                           value="{{ room.predio if room else '' }}" required>
+                    <div class="form-text">Nome ou código do prédio onde a sala está localizada</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="andar" class="form-label">Andar <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="andar" name="andar" 
+                           value="{{ room.andar if room else '' }}" required>
+                    <div class="form-text">Andar onde a sala está localizada (ex: Térreo, 1, 2, etc.)</div>
+                </div>
+                
+                <!-- Status -->
+                <div class="col-md-6">
+                    <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="ativa" 
+                                {% if room and room.status.value == 'ativa' %}selected{% endif %}>
+                            Ativa
+                        </option>
+                        <option value="inativa" 
+                                {% if room and room.status.value == 'inativa' %}selected{% endif %}>
+                            Inativa
+                        </option>
+                        <option value="manutencao" 
+                                {% if room and room.status.value == 'manutencao' %}selected{% endif %}>
+                            Em Manutenção
+                        </option>
+                    </select>
+                    <div class="form-text">Estado atual da sala</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="responsavel" class="form-label">Responsável</label>
+                    <input type="text" class="form-control" id="responsavel" name="responsavel" 
+                           value="{{ room.responsavel if room else '' }}">
+                    <div class="form-text">Nome do responsável pela sala (opcional)</div>
+                </div>
+                
+                <!-- Descrição -->
+                <div class="col-12">
+                    <label for="descricao" class="form-label">Descrição</label>
+                    <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ room.descricao if room else '' }}</textarea>
+                    <div class="form-text">Descrição detalhada da sala (opcional)</div>
+                </div>
+                
+                <!-- Botões de Ação -->
+                <div class="col-12 mt-4">
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="/admin/rooms" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if room %}Atualizar Sala{% else %}Criar Sala{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Validação do formulário
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Validar capacidade
+            const capacidade = document.getElementById('capacidade');
+            if (parseInt(capacidade.value) < 1) {
+                capacidade.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                capacidade.classList.remove('is-invalid');
+            }
+            
+            // Validar código (apenas alfanuméricos e hífen)
+            const codigo = document.getElementById('codigo');
+            if (!/^[A-Za-z0-9\-]+$/.test(codigo.value)) {
+                codigo.classList.add('is-invalid');
+                alert('O código deve conter apenas letras, números e hífen.');
+                isValid = false;
+            } else {
+                codigo.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

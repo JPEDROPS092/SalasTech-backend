@@ -1,0 +1,257 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+        Dashboard
+    </h1>
+    <div class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        <span id="current-time"></span>
+    </div>
+</div>
+
+<!-- Estatísticas Principais -->
+<div class="row g-4 mb-5">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ total_users }}</div>
+                        <div class="small">Usuários Totais</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-door-open fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ active_rooms }}</div>
+                        <div class="small">Salas Ativas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ pending_reservations }}</div>
+                        <div class="small">Reservas Pendentes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100" style="background: linear-gradient(135deg, #8b5cf6, #a855f7);">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-building fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ total_departments }}</div>
+                        <div class="small">Departamentos</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Reservas Recentes -->
+    <div class="col-xl-8">
+        <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2 text-primary"></i>
+                    Reservas Recentes
+                </h5>
+                <a href="/admin/reservations" class="btn btn-outline-primary btn-sm">
+                    Ver Todas
+                    <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_reservations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Usuário</th>
+                                <th>Sala</th>
+                                <th>Data/Hora</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in recent_reservations %}
+                            <tr>
+                                <td class="fw-medium">{{ reservation.titulo }}</td>
+                                <td>{{ reservation.usuario.nome }} {{ reservation.usuario.sobrenome }}</td>
+                                <td>{{ reservation.sala.nome }}</td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ reservation.inicio_data_hora.strftime('%d/%m/%Y %H:%M') }}
+                                    </small>
+                                </td>
+                                <td>
+                                    {% if reservation.status.name == 'PENDENTE' %}
+                                        <span class="badge bg-warning">Pendente</span>
+                                    {% elif reservation.status.name == 'APROVADA' %}
+                                        <span class="badge bg-success">Aprovada</span>
+                                    {% elif reservation.status.name == 'RECUSADA' %}
+                                        <span class="badge bg-danger">Recusada</span>
+                                    {% elif reservation.status.name == 'CANCELADA' %}
+                                        <span class="badge bg-secondary">Cancelada</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ reservation.status.value }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Nenhuma reserva recente encontrada</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Novos Usuários -->
+    <div class="col-xl-4">
+        <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2 text-success"></i>
+                    Novos Usuários
+                </h5>
+                <a href="/admin/users" class="btn btn-outline-success btn-sm">
+                    Ver Todos
+                    <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_users %}
+                <div class="list-group list-group-flush">
+                    {% for user in recent_users %}
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                {{ user.nome[0] }}{{ user.sobrenome[0] }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">{{ user.nome }} {{ user.sobrenome }}</div>
+                                <small class="text-muted">{{ user.email }}</small>
+                                {% if user.departamento %}
+                                <br><small class="text-primary">{{ user.departamento.nome }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">
+                                    {{ user.criado_em.strftime('%d/%m') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Nenhum usuário recente encontrado</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row g-4 mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2 text-warning"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="/admin/users" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <span>Gerenciar Usuários</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/rooms" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fas fa-door-open fa-2x mb-2"></i>
+                            <span>Gerenciar Salas</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/reservations" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                            <span>Gerenciar Reservas</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/departments" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="fas fa-building fa-2x mb-2"></i>
+                            <span>Gerenciar Departamentos</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função para atualizar a data/hora atual
+function updateCurrentTime() {
+    const now = new Date();
+    const timeString = now.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    document.getElementById('current-time').textContent = timeString;
+}
+
+// Atualizar a hora imediatamente e depois a cada minuto
+updateCurrentTime();
+setInterval(updateCurrentTime, 60000);
+</script>
+{% endblock %}

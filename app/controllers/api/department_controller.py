@@ -11,10 +11,9 @@ from app.core.security.middleware import get_current_user, get_admin_user
 
 
 router = APIRouter(
-#    prefix="/departments",
-    tags=["Departments"]
+    prefix="/departments",
+    tags=["Departamentos"]
 )
-
 @router.get("", response_model=list[dto.DepartamentoRespostaDTO])
 def get_all(
     limit: int = Query(1000, gt=0), 

@@ -1,0 +1,104 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        {% if is_new %}
+        <i class="fas fa-user-plus me-2 text-success"></i>
+        Criar Novo Usuário
+        {% else %}
+        <i class="fas fa-user-edit me-2 text-primary"></i>
+        Editar Usuário
+        {% endif %}
+    </h1>
+    
+    <div>
+        <a href="{% if is_new %}/admin/users{% else %}/admin/users/{{ user.id }}{% endif %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Voltar
+        </a>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="{% if is_new %}/admin/users/new{% else %}/admin/users/{{ user.id }}/edit{% endif %}">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nome" name="nome" value="{{ user.nome if user else '' }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="sobrenome" class="form-label">Sobrenome <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="sobrenome" name="sobrenome" value="{{ user.sobrenome if user else '' }}" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user else '' }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="senha" class="form-label">
+                    {% if is_new %}
+                    Senha <span class="text-danger">*</span>
+                    {% else %}
+                    Nova Senha <small class="text-muted">(deixe em branco para manter a atual)</small>
+                    {% endif %}
+                </label>
+                <input type="password" class="form-control" id="senha" name="senha" {% if is_new %}required{% endif %}>
+                {% if not is_new %}
+                <div class="form-text">Apenas preencha se desejar alterar a senha atual.</div>
+                {% endif %}
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="papel" class="form-label">Papel <span class="text-danger">*</span></label>
+                    <select class="form-select" id="papel" name="papel" required>
+                        {% for role in roles %}
+                        <option value="{{ role.name }}" {% if user and user.papel.name == role.name %}selected{% endif %}>
+                            {% if role.name == 'ADMIN' %}
+                            Administrador
+                            {% elif role.name == 'MANAGER' %}
+                            Gerente
+                            {% else %}
+                            Usuário
+                            {% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="departamento_id" class="form-label">Departamento</label>
+                    <select class="form-select" id="departamento_id" name="departamento_id">
+                        <option value="">Nenhum</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if user and user.departamento_id == dept.id %}selected{% endif %}>
+                            {{ dept.nome }} ({{ dept.codigo }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% if is_new %}/admin/users{% else %}/admin/users/{{ user.id }}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    {% if is_new %}Criar Usuário{% else %}Salvar Alterações{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

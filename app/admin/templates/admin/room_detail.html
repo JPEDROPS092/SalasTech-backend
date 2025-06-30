@@ -1,0 +1,291 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-door-open me-2 text-primary"></i>
+        Detalhes da Sala
+    </h1>
+    
+    <div class="d-flex gap-2">
+        <a href="/admin/rooms" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Voltar para Lista
+        </a>
+        <a href="/admin/rooms/{{ room.id }}/edit" class="btn btn-primary">
+            <i class="fas fa-edit me-1"></i>
+            Editar Sala
+        </a>
+    </div>
+</div>
+
+{% if error_message %}
+<div class="alert alert-danger my-3" role="alert">
+    <i class="fas fa-exclamation-circle me-2"></i>
+    {{ error_message }}
+</div>
+{% endif %}
+
+<!-- Detalhes da Sala -->
+<div class="row">
+    <!-- Informações Básicas -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informações Básicas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12 mb-4">
+                        <h2 class="display-6">{{ room.nome }}</h2>
+                        <div class="badge bg-secondary fs-6 mb-2">{{ room.codigo }}</div>
+                        {% if room.descricao %}
+                        <p class="text-muted mt-2">{{ room.descricao }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Capacidade</h6>
+                        <p class="fs-5">
+                            <i class="fas fa-users text-info me-2"></i>
+                            {{ room.capacidade }} pessoas
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Status</h6>
+                        <p class="fs-5">
+                            {% if room.status.value == 'ativa' %}
+                                <span class="badge bg-success fs-6">Ativa</span>
+                            {% elif room.status.value == 'inativa' %}
+                                <span class="badge bg-danger fs-6">Inativa</span>
+                            {% elif room.status.value == 'manutencao' %}
+                                <span class="badge bg-warning fs-6">Em Manutenção</span>
+                            {% else %}
+                                <span class="badge bg-info fs-6">{{ room.status.value }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Departamento</h6>
+                        <p>
+                            {% if room.departamento %}
+                                <span class="badge bg-light text-dark fs-6">{{ room.departamento.nome }} ({{ room.departamento.codigo }})</span>
+                            {% else %}
+                                <span class="text-muted">Não definido</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Responsável</h6>
+                        <p>
+                            {% if room.responsavel %}
+                                <i class="fas fa-user text-secondary me-2"></i>
+                                {{ room.responsavel }}
+                            {% else %}
+                                <span class="text-muted">Não definido</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recursos da Sala -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>
+                    Recursos
+                </h5>
+                <a href="/admin/rooms/{{ room.id }}/resources" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    Gerenciar Recursos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if room.recursos %}
+                <div class="row">
+                    {% for resource in room.recursos %}
+                    <div class="col-md-6 mb-2">
+                        <div class="d-flex align-items-center p-2 border rounded">
+                            <i class="fas fa-cube text-primary me-3 fa-2x"></i>
+                            <div>
+                                <h6 class="mb-0">{{ resource.nome_recurso }}</h6>
+                                <small class="text-muted">{{ resource.descricao }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum recurso cadastrado</h5>
+                    <p class="text-muted mb-3">Adicione recursos para esta sala para facilitar a reserva.</p>
+                    <a href="/admin/rooms/{{ room.id }}/resources" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Adicionar Recursos
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Últimas Reservas -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Últimas Reservas
+                </h5>
+                <a href="/admin/reservations?room_id={{ room.id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-calendar me-1"></i>
+                    Ver Todas
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_reservations %}
+                <div class="list-group">
+                    {% for reservation in recent_reservations %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ reservation.titulo }}</h6>
+                            <small>
+                                {% if reservation.status.value == 'confirmada' %}
+                                    <span class="badge bg-success">Confirmada</span>
+                                {% elif reservation.status.value == 'pendente' %}
+                                    <span class="badge bg-warning">Pendente</span>
+                                {% elif reservation.status.value == 'cancelada' %}
+                                    <span class="badge bg-danger">Cancelada</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ reservation.status.value }}</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                        <p class="mb-1">{{ reservation.inicio_data_hora.strftime('%d/%m/%Y %H:%M') }} - {{ reservation.fim_data_hora.strftime('%H:%M') }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            {{ reservation.usuario.nome }} {{ reservation.usuario.sobrenome }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhuma reserva recente</h5>
+                    <p class="text-muted">Não há reservas recentes para esta sala.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Localização -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    Localização
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-building fa-3x text-primary me-3"></i>
+                    <div>
+                        <h5 class="mb-0">{{ room.predio }}</h5>
+                        <div class="text-muted">{{ room.andar }}º andar</div>
+                    </div>
+                </div>
+                
+                {% if room.coordenadas %}
+                <div class="ratio ratio-16x9 mt-3">
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1000.{{ room.coordenadas }}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1sen!2sbr!4v1622222222222!5m2!1sen!2sbr" 
+                        style="border:0;" 
+                        allowfullscreen="" 
+                        loading="lazy">
+                    </iframe>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Informações do Sistema -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>
+                    Informações do Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>ID</span>
+                        <span class="badge bg-secondary">{{ room.id }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Criado em</span>
+                        <span>{{ room.criado_em.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Atualizado em</span>
+                        <span>{{ room.atualizado_em.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </li>
+                </ul>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="/admin/rooms/{{ room.id }}/edit" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i>
+                        Editar Sala
+                    </a>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ room.id }}', '{{ room.nome }}')">
+                        <i class="fas fa-trash me-1"></i>
+                        Excluir Sala
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Você está prestes a excluir a sala <strong id="roomName"></strong>.</p>
+                <p>Todas as reservas associadas a esta sala também serão excluídas.</p>
+                <p class="mb-0 text-danger">Esta ação não pode ser desfeita!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Excluir Permanentemente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- No need for extra_scripts block as we moved the code to admin.js -->

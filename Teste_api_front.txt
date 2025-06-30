@@ -1,0 +1,21 @@
+INFO:     Application startup complete.
+2025-06-26 11:03:27,827 - app.controllers.api.auth - ERROR - Login error for alexandre.mendes9@ifam.edu.br: 'Session' object has no attribute 'obter_por_email'
+INFO:     127.0.0.1:43162 - "POST /auth/login HTTP/1.1" 500 Internal Server Error
+2025-06-26 11:03:38,019 - app.controllers.api.auth - ERROR - Login error for alexandre.mendes9@ifam.edu.br: 'Session' object has no attribute 'obter_por_email'
+INFO:     127.0.0.1:38816 - "POST /auth/login HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:59350 - "GET /admin/users/30/edit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59350 - "GET /favicon.ico HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59350 - "GET /admin/users/30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59350 - "GET /favicon.ico HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59364 - "GET /admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59364 - "GET /favicon.ico HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60542 - "POST /auth/login HTTP/1.1" 422 Unprocessable Content
+   ~/projects/TechSalas-frontend    dev !12 ?3  curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alexandre.mendes9@ifam.edu.br","password":"admin123"}'
+{"detail":"Authentication failed"}%                                                    
+    ~/projects/TechSalas-frontend    dev !12 ?3  curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"Alexandre Mendes","password":"admin123"}'
+{"detail":[{"type":"value_error","loc":["body","email"],"msg":"value is not a valid email address: An email address must have an @-sign.","input":"Alexandre Mendes","ctx":{"reason":"An email address must have an @-sign."}}]}%                                    
+    ~/projects/TechSalas-frontend    dev !12 ?3                             ✔ 

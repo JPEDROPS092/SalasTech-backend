@@ -1,0 +1,4 @@
+# Este arquivo garante que o diretório 'versions' seja incluído em controle de versão
+# mesmo quando estiver vazio.
+
+# Não remova este arquivo.

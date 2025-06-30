@@ -1,0 +1,20 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="text-center py-5">
+    <div class="display-1 text-danger mb-4">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    
+    <h1 class="h3 mb-3">{{ title }}</h1>
+    
+    <p class="lead text-muted">{{ message }}</p>
+    
+    <div class="mt-4">
+        <a href="{{ back_url }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Voltar
+        </a>
+    </div>
+</div>
+{% endblock %}

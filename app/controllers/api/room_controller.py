@@ -13,8 +13,8 @@ from app.core.security.middleware import get_current_user, get_admin_user
 
 
 router = APIRouter(
-  #  prefix="/rooms",
-    tags=["Rooms"]
+    prefix="/rooms",
+    tags=["Salas"]
 )
 
 @router.get("", response_model=list[dto.SalaRespostaDTO])

@@ -1,0 +1,247 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-door-open me-2 text-primary"></i>
+        Salas
+        <span class="badge bg-primary ms-2">{{ total }}</span>
+    </h1>
+    
+    <div class="d-flex gap-2">
+        <a href="/admin/rooms/new" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i>
+            Nova Sala
+        </a>
+    </div>
+</div>
+
+<!-- Filtros e Busca -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           class="form-control" 
+                           name="search" 
+                           value="{{ search }}" 
+                           placeholder="Buscar por nome, código, prédio...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Buscar
+                    </button>
+                    {% if search %}
+                    <a href="/admin/rooms" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Limpar
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Salas -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if rooms %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Sala</th>
+                        <th>Localização</th>
+                        <th>Capacidade</th>
+                        <th>Departamento</th>
+                        <th>Status</th>
+                        <th>Criado em</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for room in rooms %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-door-open fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ room.nome }}</div>
+                                    <small class="text-muted">{{ room.codigo }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <span class="fw-medium">{{ room.predio }}</span>
+                                <br>
+                                <small class="text-muted">{{ room.andar }}º andar</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info fs-6">
+                                <i class="fas fa-users me-1"></i>
+                                {{ room.capacidade }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if room.departamento %}
+                                <span class="badge bg-light text-dark">{{ room.departamento.nome }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if room.status.name == 'ATIVA' %}
+                                <span class="badge bg-success">Ativa</span>
+                            {% elif room.status.name == 'INATIVA' %}
+                                <span class="badge bg-secondary">Inativa</span>
+                            {% elif room.status.name == 'EM_MANUTENCAO' %}
+                                <span class="badge bg-warning">Em Manutenção</span>
+                            {% else %}
+                                <span class="badge bg-info">{{ room.status.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ room.criado_em.strftime('%d/%m/%Y') }}
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="/admin/rooms/{{ room.id }}/edit" class="btn btn-outline-primary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="/admin/rooms/{{ room.id }}" class="btn btn-outline-info" title="Ver Detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="/admin/rooms/{{ room.id }}/resources" class="btn btn-outline-success" title="Recursos">
+                                    <i class="fas fa-tools"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" title="Excluir" 
+                                        onclick="confirmDelete('{{ room.id }}', '{{ room.nome }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-door-open fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Nenhuma sala encontrada</h5>
+            {% if search %}
+            <p class="text-muted">Tente ajustar os filtros de busca</p>
+            <a href="/admin/rooms" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Voltar à lista completa
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Paginação -->
+{% if total_pages > 1 %}
+<nav aria-label="Paginação" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+            <li class="page-item active">
+                <span class="page-link">{{ p }}</span>
+            </li>
+            {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}">{{ p }}</a>
+            </li>
+            {% elif p == 4 and page > 6 %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% elif p == total_pages - 3 and page < total_pages - 5 %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page < total_pages %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Você está prestes a excluir a sala <strong id="roomName"></strong>.</p>
+                <p>Não será possível excluir a sala se ela tiver reservas associadas.</p>
+                <p class="mb-0 text-danger">Esta ação não pode ser desfeita!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Excluir Permanentemente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toasts para mensagens de status -->
+{% if status_message %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header {% if status_type == 'success' %}bg-success text-white{% elif status_type == 'error' %}bg-danger text-white{% else %}bg-primary text-white{% endif %}">
+            <i class="fas {% if status_type == 'success' %}fa-check-circle{% elif status_type == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+            <strong class="me-auto">{{ status_title|default('Notificação') }}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+        <div class="toast-body">
+            {{ status_message }}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+<!-- No need for extra_scripts block as we moved the code to admin.js -->

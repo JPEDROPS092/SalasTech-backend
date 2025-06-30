@@ -236,7 +236,7 @@ class SalaDb(Base):
     Andar onde a sala está localizada.
     String, obrigatório. Possui um índice.
     """
-    departamento_id = mapped_column("departamento_id", Integer, ForeignKey('departamentos.id'), nullable=False, index=True) # Alterado ForeignKey para 'departamentos.id'
+    departamento_id = mapped_column("departamento_id", Integer, ForeignKey('departments.id'), nullable=False, index=True) # Corrigido ForeignKey para 'departments.id'
     """
     Chave estrangeira que referencia o ID do departamento (`DepartamentoDb`) ao qual a sala pertence.
     Inteiro, obrigatório. Possui um índice.
@@ -381,7 +381,7 @@ class ReservaDb(Base): # Alterado de 'ReservationDb' para 'ReservaDb'
       também sejam automaticamente deletadas do banco de dados.
     Possui um índice.
     """
-    usuario_id = mapped_column("usuario_id", Integer, ForeignKey('usuarios.id'), nullable=False, index=True) # Alterado de 'user_id' para 'usuario_id', ForeignKey para 'usuarios.id'
+    usuario_id = mapped_column("usuario_id", Integer, ForeignKey('users.id'), nullable=False, index=True) # Corrigido ForeignKey para 'users.id'
     """
     Chave estrangeira que referencia o ID do usuário (`UsuarioDb`) que fez a reserva.
     Inteiro, obrigatório. Possui um índice.
@@ -412,7 +412,7 @@ class ReservaDb(Base): # Alterado de 'ReservationDb' para 'ReservaDb'
     Utiliza um tipo Enum (`enums.ReservationStatus`) para valores controlados.
     Possui um valor padrão `enums.ReservationStatus.PENDENTE` e um índice para filtragem por status.
     """
-    aprovado_por = mapped_column("aprovado_por", Integer, ForeignKey('usuarios.id'), nullable=True, index=True) # Alterado de 'approved_by' para 'aprovado_por', ForeignKey para 'usuarios.id'
+    aprovado_por = mapped_column("aprovado_por", Integer, ForeignKey('users.id'), nullable=True, index=True) # Corrigido ForeignKey para 'users.id'
     """
     Chave estrangeira que referencia o ID do usuário (`UsuarioDb`) que aprovou a reserva.
     Inteiro, opcional (`nullable=True`), pois nem todas as reservas requerem aprovação ou ainda não foram aprovadas.

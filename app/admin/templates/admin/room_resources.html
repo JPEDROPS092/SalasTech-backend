@@ -1,0 +1,195 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-tools me-2 text-primary"></i>
+        Recursos da Sala
+    </h1>
+    
+    <div class="d-flex gap-2">
+        <a href="/admin/rooms/{{ room.id }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Voltar para Sala
+        </a>
+    </div>
+</div>
+
+<!-- Informações da Sala -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-door-open fa-3x text-primary me-3"></i>
+            <div>
+                <h2 class="h4 mb-1">{{ room.nome }}</h2>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-secondary me-2">{{ room.codigo }}</span>
+                    <span class="me-2">|</span>
+                    <i class="fas fa-map-marker-alt me-1 text-muted"></i>
+                    <span class="text-muted">{{ room.predio }}, {{ room.andar }}º andar</span>
+                    <span class="me-2">|</span>
+                    <i class="fas fa-users me-1 text-muted"></i>
+                    <span class="text-muted">{{ room.capacidade }} pessoas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recursos Atuais -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Recursos Atuais
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if room.recursos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Recurso</th>
+                                <th>Descrição</th>
+                                <th>Quantidade</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for resource in room.recursos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-cube text-primary me-3"></i>
+                                        <span>{{ resource.nome_recurso }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ resource.descricao }}</td>
+                                <td>{{ resource.quantidade|default(1) }}</td>
+                                <td class="text-center">
+                                    <form method="POST" action="/admin/rooms/{{ room.id }}/resources" 
+                                          onsubmit="return confirm('Tem certeza que deseja remover este recurso?');">
+                                        <input type="hidden" name="delete_resource_id" value="{{ resource.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum recurso adicionado</h5>
+                    <p class="text-muted">Adicione recursos à sala usando o formulário ao lado.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Adicionar Recurso -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    Adicionar Recurso
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/admin/rooms/{{ room.id }}/resources">
+                    <div class="mb-3">
+                        <label for="resource_id" class="form-label">Recurso Existente</label>
+                        <select class="form-select" id="resource_id" name="resource_id">
+                            <option value="" selected>Selecione um recurso...</option>
+                            {% for resource in available_resources %}
+                            <option value="{{ resource.id }}">{{ resource.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Selecione um recurso existente ou crie um novo abaixo</div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1"><hr></div>
+                            <div class="px-3">OU</div>
+                            <div class="flex-grow-1"><hr></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nome_recurso" class="form-label">Nome do Novo Recurso</label>
+                        <input type="text" class="form-control" id="nome_recurso" name="nome_recurso">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="icon" class="form-label">Ícone</label>
+                        <select class="form-select" id="icon" name="icon">
+                            <option value="desktop">Computador</option>
+                            <option value="projector">Projetor</option>
+                            <option value="chalkboard">Quadro</option>
+                            <option value="wifi">Wi-Fi</option>
+                            <option value="air-conditioner">Ar-condicionado</option>
+                            <option value="chair">Cadeira</option>
+                            <option value="table">Mesa</option>
+                            <option value="cube">Outro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantidade" class="form-label">Quantidade</label>
+                        <input type="number" class="form-control" id="quantidade" name="quantidade" min="1" value="1">
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Adicionar Recurso
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Desabilitar formulário de novo recurso quando um recurso existente é selecionado
+    document.addEventListener('DOMContentLoaded', function() {
+        const resourceSelect = document.getElementById('resource_id');
+        const nomeInput = document.getElementById('nome_recurso');
+        const descricaoInput = document.getElementById('descricao');
+        const quantidadeInput = document.getElementById('quantidade');
+        
+        function toggleNewResourceForm() {
+            const selectedValue = resourceSelect.value;
+            const isExistingResourceSelected = selectedValue !== '';
+            
+            nomeInput.disabled = isExistingResourceSelected;
+            descricaoInput.disabled = isExistingResourceSelected;
+            
+            if (isExistingResourceSelected) {
+                nomeInput.value = '';
+                descricaoInput.value = '';
+            }
+        }
+        
+        resourceSelect.addEventListener('change', toggleNewResourceForm);
+        toggleNewResourceForm(); // Initial state
+    });
+</script>
+{% endblock %}
