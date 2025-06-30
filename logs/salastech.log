@@ -825,3 +825,15 @@
 2025-06-26 11:47:15,175 - app.main - INFO - Aplicação SalasTech iniciada com sucesso!
 2025-06-26 11:47:15,175 - app.main - INFO - Endpoints da API disponíveis diretamente na raiz
 2025-06-26 11:47:15,175 - app.main - INFO - Health check disponível em: /health
+2025-06-30 13:33:21,603 - app.main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-30 13:33:21,603 - app.main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-30 13:33:21,603 - app.main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-30 13:33:21,675 - app.main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-30 13:33:21,675 - app.main - INFO - Endpoints da API disponíveis diretamente na raiz
+2025-06-30 13:33:21,675 - app.main - INFO - Health check disponível em: /health
+2025-06-30 13:35:06,906 - app.main - INFO - Iniciando SalasTech - Sistema de Gerenciamento de Salas IFAM
+2025-06-30 13:35:06,906 - app.main - INFO - Segurança aplicada: CORS, JWT Authentication, Bearer Tokens
+2025-06-30 13:35:06,906 - app.main - INFO - Documentação disponível em: /docs (Swagger) e /redoc (ReDoc)
+2025-06-30 13:35:06,977 - app.main - INFO - Aplicação SalasTech iniciada com sucesso!
+2025-06-30 13:35:06,977 - app.main - INFO - Endpoints da API disponíveis diretamente na raiz
+2025-06-30 13:35:06,977 - app.main - INFO - Health check disponível em: /health

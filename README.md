@@ -2,6 +2,8 @@
 
 SalasTech é um sistema completo para gerenciamento de salas e reservas, desenvolvido com FastAPI e seguindo a arquitetura MVC.
 
+![1751306047477](image/README/1751306047477.png)
+
 ## Funcionalidades
 
 - Gerenciamento de usuários com diferentes níveis de acesso
@@ -44,6 +46,7 @@ A documentação completa está disponível no diretório `docs/`:
    git clone https://github.com/jpedrops092/SalasTech-backend.git
    cd SalasTech-backend
    ```
+
 2. Crie e ative um ambiente virtual:
 
    ```bash
@@ -51,41 +54,44 @@ A documentação completa está disponível no diretório `docs/`:
    source venv/bin/activate  # Linux/macOS
    venv\Scripts\activate     # Windows
    ```
+
 3. Instale as dependências:
 
    ```bash
    pip install -r requirements.txt
    ```
-   
+
    Ou usando o arquivo pyproject.toml:
-   
+
    ```bash
    pip install -e .
    ```
-   
+
 4. Configure o ambiente:
 
    ```bash
    cp .env.example .env
    # Edite o arquivo .env com suas configurações
    ```
+
 5. Execute as migrações do banco de dados:
 
    ```bash
    python -m migrations.migrate
    ```
-   
+
 6. Crie um usuário administrador:
 
    ```bash
    python manage_admins.py
    ```
-   
+
 7. Inicie o servidor:
 
    ```bash
    uvicorn app.main:app --reload
    ```
+
 8. Acesse a aplicação:
 
    - API: http://localhost:8000/api
@@ -102,6 +108,7 @@ python manage_admins.py
 ```
 
 Este script permite:
+
 - Criar novos administradores
 - Listar administradores existentes
 - Editar informações de administradores

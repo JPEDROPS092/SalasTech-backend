@@ -1,5 +1,59 @@
-.env
-#db.sqlite
-env/
+# Python
 __pycache__/
-src/SalasTech/app/logs/salastech.log
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.env
+.env
+.venv
+venv/
+ENV/
+
+# VSCode
+.vscode/
+
+# SQLite database
+*.sqlite
+*.sqlite3
+
+db.sqlite
+
+# Backup files
+backups/
+
+# Logs
+*.log
+logs/
+app/logs/
+
+# Alembic
+migrations/versions/__pycache__/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+
+# Misc
+*.bak
+*.swp
+*.swo
+
+# Ignore compiled files
+*.so
+*.dll
+*.exe
+
