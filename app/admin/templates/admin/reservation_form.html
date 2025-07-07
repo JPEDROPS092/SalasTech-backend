@@ -1,0 +1,203 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-calendar-plus me-2 text-primary"></i>
+        {% if reservation %}
+            Editar Reserva
+        {% else %}
+            Nova Reserva
+        {% endif %}
+    </h1>
+    
+    <a href="/admin/reservations{% if room_id %}?room_id={{ room_id }}{% endif %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>
+        Voltar
+    </a>
+</div>
+
+{% if error_message %}
+<div class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ error_message }}
+</div>
+{% endif %}
+
+{% if success_message %}
+<div class="alert alert-success" role="alert">
+    <i class="fas fa-check-circle me-2"></i>
+    {{ success_message }}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <!-- Título -->
+            <div class="col-12">
+                <label for="titulo" class="form-label">
+                    <i class="fas fa-heading me-1"></i>
+                    Título da Reserva <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" id="titulo" name="titulo" 
+                       value="{{ reservation.titulo if reservation else '' }}" 
+                       placeholder="Ex: Reunião de planejamento mensal" required>
+            </div>
+
+            <!-- Descrição -->
+            <div class="col-12">
+                <label for="descricao" class="form-label">
+                    <i class="fas fa-align-left me-1"></i>
+                    Descrição
+                </label>
+                <textarea class="form-control" id="descricao" name="descricao" rows="3" 
+                          placeholder="Descreva o propósito da reserva...">{{ reservation.descricao if reservation else '' }}</textarea>
+            </div>
+
+            <!-- Sala -->
+            <div class="col-md-6">
+                <label for="sala_id" class="form-label">
+                    <i class="fas fa-door-open me-1"></i>
+                    Sala <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="sala_id" name="sala_id" required>
+                    <option value="">Selecione uma sala</option>
+                    {% for room in rooms %}
+                    <option value="{{ room.id }}" 
+                            {% if (reservation and reservation.sala_id == room.id) or (room_id and room.id == room_id) %}selected{% endif %}>
+                        {{ room.nome }} ({{ room.codigo }}) - {{ room.capacidade }} pessoas
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Usuário (apenas para admin) -->
+            <div class="col-md-6">
+                <label for="usuario_id" class="form-label">
+                    <i class="fas fa-user me-1"></i>
+                    Usuário <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="usuario_id" name="usuario_id" required>
+                    <option value="">Selecione um usuário</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" 
+                            {% if reservation and reservation.usuario_id == user.id %}selected{% endif %}>
+                        {{ user.nome }} {{ user.sobrenome }} ({{ user.email }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Data de Início -->
+            <div class="col-md-6">
+                <label for="inicio_data" class="form-label">
+                    <i class="fas fa-calendar me-1"></i>
+                    Data de Início <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" id="inicio_data" name="inicio_data" 
+                       value="{{ reservation.inicio_data_hora.strftime('%Y-%m-%d') if reservation else '' }}" required>
+            </div>
+
+            <!-- Horário de Início -->
+            <div class="col-md-6">
+                <label for="inicio_hora" class="form-label">
+                    <i class="fas fa-clock me-1"></i>
+                    Horário de Início <span class="text-danger">*</span>
+                </label>
+                <input type="time" class="form-control" id="inicio_hora" name="inicio_hora" 
+                       value="{{ reservation.inicio_data_hora.strftime('%H:%M') if reservation else '' }}" required>
+            </div>
+
+            <!-- Data de Fim -->
+            <div class="col-md-6">
+                <label for="fim_data" class="form-label">
+                    <i class="fas fa-calendar me-1"></i>
+                    Data de Fim <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" id="fim_data" name="fim_data" 
+                       value="{{ reservation.fim_data_hora.strftime('%Y-%m-%d') if reservation else '' }}" required>
+            </div>
+
+            <!-- Horário de Fim -->
+            <div class="col-md-6">
+                <label for="fim_hora" class="form-label">
+                    <i class="fas fa-clock me-1"></i>
+                    Horário de Fim <span class="text-danger">*</span>
+                </label>
+                <input type="time" class="form-control" id="fim_hora" name="fim_hora" 
+                       value="{{ reservation.fim_data_hora.strftime('%H:%M') if reservation else '' }}" required>
+            </div>
+
+            <!-- Status (apenas para edição) -->
+            {% if reservation %}
+            <div class="col-md-6">
+                <label for="status" class="form-label">
+                    <i class="fas fa-flag me-1"></i>
+                    Status
+                </label>
+                <select class="form-select" id="status" name="status">
+                    {% for status in reservation_statuses %}
+                    <option value="{{ status }}" 
+                            {% if reservation.status.name == status %}selected{% endif %}>
+                        {% if status == 'PENDENTE' %}Pendente
+                        {% elif status == 'CONFIRMADA' %}Confirmada
+                        {% elif status == 'CANCELADA' %}Cancelada
+                        {% elif status == 'CONCLUIDA' %}Concluída
+                        {% elif status == 'EM_ANDAMENTO' %}Em Andamento
+                        {% else %}{{ status }}
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <!-- Botões -->
+            <div class="col-12 pt-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        {% if reservation %}
+                            Atualizar Reserva
+                        {% else %}
+                            Criar Reserva
+                        {% endif %}
+                    </button>
+                    <a href="/admin/reservations{% if room_id %}?room_id={{ room_id }}{% endif %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-preencher data de fim quando data de início for alterada
+    const inicioData = document.getElementById('inicio_data');
+    const fimData = document.getElementById('fim_data');
+    
+    inicioData.addEventListener('change', function() {
+        if (!fimData.value) {
+            fimData.value = this.value;
+        }
+    });
+    
+    // Validar que data/hora de fim é após início
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const inicioDateTime = new Date(inicioData.value + 'T' + document.getElementById('inicio_hora').value);
+        const fimDateTime = new Date(fimData.value + 'T' + document.getElementById('fim_hora').value);
+        
+        if (fimDateTime <= inicioDateTime) {
+            e.preventDefault();
+            alert('A data/hora de fim deve ser posterior à data/hora de início.');
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

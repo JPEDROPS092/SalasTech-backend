@@ -7,35 +7,41 @@ O painel administrativo do SalasTech é uma interface web moderna e intuitiva pa
 ## ✨ Funcionalidades
 
 ### 🔐 **Autenticação Segura**
+
 - Login exclusivo para administradores
 - Sessões seguras com timeout automático
 - Integração com sistema de autenticação existente
 
 ### 📊 **Dashboard Interativo**
+
 - Estatísticas em tempo real
 - Gráficos e métricas importantes
 - Visão geral do sistema
 - Ações rápidas para operações comuns
 
 ### 👥 **Gerenciamento de Usuários**
+
 - Lista paginada de usuários
 - Busca e filtros avançados
 - Visualização de papéis e departamentos
 - Ações em lote para administração
 
 ### 🏢 **Administração de Departamentos**
+
 - Cards visuais com informações resumidas
 - Estatísticas por departamento
 - Gerenciamento de gerentes
 - Visualização hierárquica
 
 ### 🚪 **Controle de Salas**
+
 - Lista detalhada de salas
 - Filtros por localização e capacidade
 - Status em tempo real
 - Gerenciamento de recursos
 
 ### 📅 **Supervisão de Reservas**
+
 - Lista completa de reservas
 - Filtros por status e data
 - Aprovação/rejeição rápida
@@ -69,18 +75,21 @@ uvicorn app.main:app --reload --port 8000
 ## 🎨 Interface
 
 ### **Design Moderno**
+
 - Layout responsivo para desktop e mobile
 - Sidebar de navegação intuitiva
 - Cards e componentes visuais elegantes
 - Cores e tipografia profissionais
 
 ### **Experiência do Usuário**
+
 - Navegação fluida entre seções
 - Feedback visual para ações
 - Loading states e confirmações
 - Mensagens de erro claras
 
 ### **Componentes Interativos**
+
 - Tabelas com ordenação e paginação
 - Modais para ações rápidas
 - Filtros dinâmicos
@@ -97,17 +106,20 @@ O painel administrativo é totalmente responsivo:
 ## 🔧 Tecnologias Utilizadas
 
 ### **Backend**
+
 - **FastAPI**: Framework web moderno e rápido
 - **Jinja2**: Template engine para renderização HTML
 - **SQLAlchemy**: ORM para interação com banco de dados
 - **Starlette**: Framework ASGI subjacente
 
 ### **Frontend**
+
 - **Bootstrap 5**: Framework CSS moderno
 - **Font Awesome**: Ícones vetoriais
 - **JavaScript Vanilla**: Interatividade sem dependências extras
 
 ### **Segurança**
+
 - **Session Middleware**: Gerenciamento seguro de sessões
 - **Password Hashing**: bcrypt para senhas
 - **CSRF Protection**: Proteção contra ataques CSRF
@@ -115,6 +127,7 @@ O painel administrativo é totalmente responsivo:
 ## 📋 Funcionalidades Detalhadas
 
 ### **Dashboard**
+
 - ✅ Estatísticas gerais do sistema
 - ✅ Reservas recentes
 - ✅ Novos usuários
@@ -122,6 +135,7 @@ O painel administrativo é totalmente responsivo:
 - ✅ Widgets informativos
 
 ### **Usuários**
+
 - ✅ Lista paginada com busca
 - ✅ Filtros por papel e departamento
 - ✅ Visualização de avatares
@@ -129,6 +143,7 @@ O painel administrativo é totalmente responsivo:
 - ⚠️ Criação de novos usuários (próxima versão)
 
 ### **Salas**
+
 - ✅ Lista com filtros avançados
 - ✅ Indicadores de status coloridos
 - ✅ Informações de localização
@@ -136,6 +151,7 @@ O painel administrativo é totalmente responsivo:
 - ⚠️ Upload de imagens (próxima versão)
 
 ### **Reservas**
+
 - ✅ Visualização completa
 - ✅ Filtros por status e data
 - ✅ Aprovação/rejeição
@@ -143,6 +159,7 @@ O painel administrativo é totalmente responsivo:
 - ⚠️ Notificações automáticas (próxima versão)
 
 ### **Departamentos**
+
 - ✅ Cards visuais com estatísticas
 - ✅ Informações de gerentes
 - ✅ Contadores dinâmicos
@@ -152,18 +169,21 @@ O painel administrativo é totalmente responsivo:
 ## 🔒 Segurança
 
 ### **Autenticação**
+
 - Login obrigatório para acesso
 - Verificação de papel de administrador
 - Sessões com timeout configurável
 - Logout automático em caso de inatividade
 
 ### **Autorização**
+
 - Controle de acesso baseado em papéis
 - Verificação a cada requisição
 - Proteção de rotas sensíveis
 - Logs de auditoria para ações críticas
 
 ### **Proteções**
+
 - Sanitização de inputs
 - Validação de dados no backend
 - Proteção contra injection attacks
@@ -172,18 +192,21 @@ O painel administrativo é totalmente responsivo:
 ## 🚨 Próximas Implementações
 
 ### **Curto Prazo**
+
 - [ ] Formulários de criação/edição
 - [ ] Confirmações para ações destrutivas
 - [ ] Filtros salvos e favoritos
 - [ ] Exportação de dados
 
 ### **Médio Prazo**
+
 - [ ] Notificações em tempo real
 - [ ] Sistema de auditoria visual
 - [ ] Relatórios integrados
 - [ ] Dashboard customizável
 
 ### **Longo Prazo**
+
 - [ ] API para integrações
 - [ ] Múltiplos idiomas
 - [ ] Temas personalizáveis

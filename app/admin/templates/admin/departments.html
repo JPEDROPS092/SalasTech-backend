@@ -1,184 +1,168 @@
-{% extends "admin/base.html" %}
-
-{% block content %}
+{% extends "admin/base.html" %} {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">
-        <i class="fas fa-building me-2 text-primary"></i>
-        Departamentos
-        <span class="badge bg-primary ms-2">{{ departments|length }}</span>
-    </h1>
-    
-    <div class="d-flex gap-2">
-        <button class="btn btn-success">
-            <i class="fas fa-plus me-1"></i>
-            Novo Departamento
-        </button>
-    </div>
+  <h1 class="h3 mb-0">
+    <i class="fas fa-building me-2 text-primary"></i>
+    Departamentos
+    <span class="badge bg-primary ms-2">{{ departments|length }}</span>
+  </h1>
+
+  <div class="d-flex gap-2">
+    <a href="/admin/departments/new" class="btn btn-success">
+      <i class="fas fa-plus me-1"></i>
+      Novo Departamento
+    </a>
+  </div>
 </div>
 
 <!-- Lista de Departamentos -->
 <div class="row g-4">
-    {% if departments %}
-    {% for department in departments %}
-    <div class="col-xl-4 col-md-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between mb-3">
-                    <div class="flex-grow-1">
-                        <h5 class="card-title mb-1">{{ department.nome }}</h5>
-                        <p class="text-muted small mb-2">{{ department.codigo }}</p>
-                        {% if department.descricao %}
-                        <p class="card-text text-muted small">
-                            {{ department.descricao[:100] }}{% if department.descricao|length > 100 %}...{% endif %}
-                        </p>
-                        {% endif %}
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Editar</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-eye me-2"></i>Ver Detalhes</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Excluir</a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- Gerente -->
-                <div class="mb-3">
-                    <label class="form-label small text-muted">Gerente</label>
-                    {% if department.gerente %}
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                            {{ department.gerente.nome[0] }}{{ department.gerente.sobrenome[0] }}
-                        </div>
-                        <div>
-                            <div class="fw-medium small">{{ department.gerente.nome }} {{ department.gerente.sobrenome }}</div>
-                            <small class="text-muted">{{ department.gerente.email }}</small>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="text-muted small">
-                        <i class="fas fa-user-slash me-1"></i>
-                        Nenhum gerente atribuído
-                    </div>
-                    {% endif %}
-                </div>
-                
-                <!-- Estatísticas -->
-                <div class="row g-2 text-center">
-                    <div class="col-4">
-                        <div class="bg-light rounded p-2">
-                            <div class="fw-bold text-primary">{{ department.usuarios|length }}</div>
-                            <small class="text-muted">Usuários</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="bg-light rounded p-2">
-                            <div class="fw-bold text-success">{{ department.salas|length }}</div>
-                            <small class="text-muted">Salas</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="bg-light rounded p-2">
-                            <div class="fw-bold text-info">
-                                {% set total_reservas = department.salas | map(attribute='reservas') | map('length') | sum %}
-                                {{ total_reservas }}
-                            </div>
-                            <small class="text-muted">Reservas</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card-footer bg-transparent">
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
-                        Criado em {{ department.criado_em.strftime('%d/%m/%Y') }}
-                    </small>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-info" title="Ver Detalhes">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-    {% else %}
-    <div class="col-12">
-        <div class="text-center py-5">
-            <i class="fas fa-building fa-3x text-muted mb-3"></i>
-            <h5 class="text-muted">Nenhum departamento encontrado</h5>
-            <p class="text-muted">Comece criando o primeiro departamento</p>
-            <button class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i>
-                Criar Primeiro Departamento
+  {% if departments %} {% for department in departments %}
+  <div class="col-xl-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div class="flex-grow-1">
+            <h5 class="card-title mb-1">{{ department.nome }}</h5>
+            <p class="text-muted small mb-2">{{ department.codigo }}</p>
+            {% if department.descricao %}
+            <p class="card-text text-muted small">
+              {{ department.descricao[:100] }}{% if department.descricao|length
+              > 100 %}...{% endif %}
+            </p>
+            {% endif %}
+          </div>
+          <div class="dropdown">
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              <i class="fas fa-ellipsis-v"></i>
             </button>
+            <ul class="dropdown-menu">
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="/admin/departments/{{ department.id }}/edit"
+                  ><i class="fas fa-edit me-2"></i>Editar</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="/admin/departments/{{ department.id }}"
+                  ><i class="fas fa-eye me-2"></i>Ver Detalhes</a
+                >
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a
+                  class="dropdown-item text-danger"
+                  href="#"
+                  data-department-id="{{ department.id }}"
+                  ><i class="fas fa-trash me-2"></i>Excluir</a
+                >
+              </li>
+            </ul>
+          </div>
         </div>
-    </div>
-    {% endif %}
-</div>
 
-<!-- Modal para Adicionar/Editar Departamento -->
-<div class="modal fade" id="departmentModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-building me-2"></i>
-                    Novo Departamento
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <!-- Gerente -->
+        <div class="mb-3">
+          <label class="form-label small text-muted">Gerente</label>
+          {% if department.gerente %}
+          <div class="d-flex align-items-center">
+            <div
+              class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+              style="width: 32px; height: 32px; font-size: 0.8rem"
+            >
+              {{ department.gerente.nome[0] }}{{ department.gerente.sobrenome[0]
+              }}
             </div>
-            <form>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="nome" class="form-label">Nome *</label>
-                        <input type="text" class="form-control" id="nome" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="codigo" class="form-label">Código *</label>
-                        <input type="text" class="form-control" id="codigo" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="descricao" class="form-label">Descrição</label>
-                        <textarea class="form-control" id="descricao" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="gerente" class="form-label">Gerente</label>
-                        <select class="form-select" id="gerente">
-                            <option value="">Selecione um gerente</option>
-                            <!-- Opções serão carregadas dinamicamente -->
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>
-                        Salvar
-                    </button>
-                </div>
-            </form>
+            <div>
+              <div class="fw-medium small">
+                {{ department.gerente.nome }} {{ department.gerente.sobrenome }}
+              </div>
+              <small class="text-muted">{{ department.gerente.email }}</small>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-muted small">
+            <i class="fas fa-user-slash me-1"></i>
+            Nenhum gerente atribuído
+          </div>
+          {% endif %}
         </div>
-    </div>
-</div>
-{% endblock %}
 
-{% block extra_scripts %}
-<script>
-    // Abrir modal ao clicar no botão "Novo Departamento"
-    document.querySelectorAll('button:contains("Novo Departamento")').forEach(btn => {
-        btn.addEventListener('click', () => {
-            new bootstrap.Modal(document.getElementById('departmentModal')).show();
-        });
-    });
-</script>
+        <!-- Estatísticas -->
+        <div class="row g-2 text-center">
+          <div class="col-4">
+            <div class="bg-light rounded p-2">
+              <div class="fw-bold text-primary">
+                {{ department.usuarios|length }}
+              </div>
+              <small class="text-muted">Usuários</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="bg-light rounded p-2">
+              <div class="fw-bold text-success">
+                {{ department.salas|length }}
+              </div>
+              <small class="text-muted">Salas</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="bg-light rounded p-2">
+              <div class="fw-bold text-info">
+                {% set total_reservas = department.salas |
+                map(attribute='reservas') | map('length') | sum %} {{
+                total_reservas }}
+              </div>
+              <small class="text-muted">Reservas</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer bg-transparent">
+        <div class="d-flex justify-content-between align-items-center">
+          <small class="text-muted">
+            Criado em {{ department.criado_em.strftime('%d/%m/%Y') }}
+          </small>
+          <div class="btn-group btn-group-sm">
+            <a
+              href="/admin/departments/{{ department.id }}/edit"
+              class="btn btn-outline-primary"
+              title="Editar"
+            >
+              <i class="fas fa-edit"></i>
+            </a>
+            <a
+              href="/admin/departments/{{ department.id }}"
+              class="btn btn-outline-info"
+              title="Ver Detalhes"
+            >
+              <i class="fas fa-eye"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %} {% else %}
+  <div class="col-12">
+    <div class="text-center py-5">
+      <i class="fas fa-building fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">Nenhum departamento encontrado</h5>
+      <p class="text-muted">Comece criando o primeiro departamento</p>
+      <a href="/admin/departments/new" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>
+        Criar Primeiro Departamento
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 {% endblock %}

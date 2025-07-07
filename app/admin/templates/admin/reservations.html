@@ -19,10 +19,10 @@
                 Voltar para Sala
             </a>
         {% endif %}
-        <button class="btn btn-success">
+        <a href="/admin/reservations/new{% if room_id %}?room_id={{ room_id }}{% endif %}" class="btn btn-success">
             <i class="fas fa-plus me-1"></i>
             Nova Reserva
-        </button>
+        </a>
     </div>
 </div>
 
@@ -40,10 +40,10 @@
                     {% for status in reservation_statuses %}
                     <option value="{{ status }}" {% if status == status_filter %}selected{% endif %}>
                         {% if status == 'PENDENTE' %}Pendente
-                        {% elif status == 'APROVADA' %}Aprovada
-                        {% elif status == 'RECUSADA' %}Recusada
+                        {% elif status == 'CONFIRMADA' %}Confirmada
                         {% elif status == 'CANCELADA' %}Cancelada
                         {% elif status == 'CONCLUIDA' %}Concluída
+                        {% elif status == 'EM_ANDAMENTO' %}Em Andamento
                         {% else %}{{ status }}
                         {% endif %}
                     </option>
@@ -131,14 +131,14 @@
                         <td>
                             {% if reservation.status.name == 'PENDENTE' %}
                                 <span class="badge bg-warning">Pendente</span>
-                            {% elif reservation.status.name == 'APROVADA' %}
-                                <span class="badge bg-success">Aprovada</span>
-                            {% elif reservation.status.name == 'RECUSADA' %}
-                                <span class="badge bg-danger">Recusada</span>
+                            {% elif reservation.status.name == 'CONFIRMADA' %}
+                                <span class="badge bg-success">Confirmada</span>
                             {% elif reservation.status.name == 'CANCELADA' %}
                                 <span class="badge bg-secondary">Cancelada</span>
                             {% elif reservation.status.name == 'CONCLUIDA' %}
                                 <span class="badge bg-info">Concluída</span>
+                            {% elif reservation.status.name == 'EM_ANDAMENTO' %}
+                                <span class="badge bg-primary">Em Andamento</span>
                             {% else %}
                                 <span class="badge bg-light text-dark">{{ reservation.status.value }}</span>
                             {% endif %}
@@ -162,20 +162,20 @@
                         </td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-info" title="Ver Detalhes">
+                                <button class="btn btn-outline-info" title="Ver Detalhes" onclick="viewReservation({{ reservation.id }})">
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 {% if reservation.status.name == 'PENDENTE' %}
-                                <button class="btn btn-outline-success" title="Aprovar">
+                                <button class="btn btn-outline-success" title="Confirmar" onclick="confirmReservation({{ reservation.id }}, '{{ reservation.titulo }}')">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <button class="btn btn-outline-danger" title="Recusar">
+                                <button class="btn btn-outline-danger" title="Cancelar" onclick="cancelReservation({{ reservation.id }}, '{{ reservation.titulo }}')">
                                     <i class="fas fa-times"></i>
                                 </button>
                                 {% endif %}
-                                <button class="btn btn-outline-primary" title="Editar">
+                                <a href="/admin/reservations/{{ reservation.id }}/edit" class="btn btn-outline-primary" title="Editar">
                                     <i class="fas fa-edit"></i>
-                                </button>
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -241,4 +241,187 @@
     </ul>
 </nav>
 {% endif %}
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2 text-success"></i>
+                    Confirmar Reserva
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja <strong>confirmar</strong> a reserva:</p>
+                <div class="alert alert-info">
+                    <strong id="confirmReservationTitle"></strong>
+                </div>
+                <p class="text-muted">Esta ação irá alterar o status da reserva para "Confirmada".</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" style="display: inline;" id="confirmForm">
+                    <input type="hidden" name="action" value="confirm">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i>
+                        Confirmar Reserva
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cancelamento -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-times-circle me-2 text-danger"></i>
+                    Cancelar Reserva
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja <strong>cancelar</strong> a reserva:</p>
+                <div class="alert alert-warning">
+                    <strong id="cancelReservationTitle"></strong>
+                </div>
+                <p class="text-muted">Esta ação irá alterar o status da reserva para "Cancelada".</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não Cancelar</button>
+                <form method="post" style="display: inline;" id="cancelForm">
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-1"></i>
+                        Cancelar Reserva
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2 text-info"></i>
+                    Detalhes da Reserva
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="reservationDetails">
+                <!-- Conteúdo carregado dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmReservation(id, title) {
+    document.getElementById('confirmReservationTitle').textContent = title;
+    document.getElementById('confirmForm').action = `/admin/reservations/${id}/status`;
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+function cancelReservation(id, title) {
+    document.getElementById('cancelReservationTitle').textContent = title;
+    document.getElementById('cancelForm').action = `/admin/reservations/${id}/status`;
+    new bootstrap.Modal(document.getElementById('cancelModal')).show();
+}
+
+function viewReservation(id) {
+    // Fazer requisição AJAX para buscar detalhes da reserva
+    fetch(`/admin/api/reservations/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            const detailsHtml = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Título:</label>
+                        <p>${data.titulo}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Status:</label>
+                        <p><span class="badge bg-${getStatusColor(data.status)}">${getStatusText(data.status)}</span></p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Descrição:</label>
+                        <p>${data.descricao || 'Nenhuma descrição fornecida'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Usuário:</label>
+                        <p>${data.usuario_nome} ${data.usuario_sobrenome}<br><small class="text-muted">${data.usuario_email}</small></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Sala:</label>
+                        <p>${data.sala_nome}<br><small class="text-muted">${data.sala_codigo}</small></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Data/Hora Início:</label>
+                        <p>${formatDateTime(data.inicio_data_hora)}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Data/Hora Fim:</label>
+                        <p>${formatDateTime(data.fim_data_hora)}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Criado em:</label>
+                        <p>${formatDateTime(data.criado_em)}</p>
+                    </div>
+                    ${data.aprovado_em ? `
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Aprovado em:</label>
+                        <p>${formatDateTime(data.aprovado_em)}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            document.getElementById('reservationDetails').innerHTML = detailsHtml;
+            new bootstrap.Modal(document.getElementById('detailsModal')).show();
+        })
+        .catch(error => {
+            alert('Erro ao carregar detalhes da reserva');
+            console.error('Error:', error);
+        });
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'PENDENTE': 'warning',
+        'CONFIRMADA': 'success',
+        'CANCELADA': 'secondary',
+        'CONCLUIDA': 'info',
+        'EM_ANDAMENTO': 'primary'
+    };
+    return colors[status] || 'light';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'PENDENTE': 'Pendente',
+        'CONFIRMADA': 'Confirmada',
+        'CANCELADA': 'Cancelada',
+        'CONCLUIDA': 'Concluída',
+        'EM_ANDAMENTO': 'Em Andamento'
+    };
+    return texts[status] || status;
+}
+
+function formatDateTime(dateTimeString) {
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('pt-BR');
+}
+</script>
+
 {% endblock %}
