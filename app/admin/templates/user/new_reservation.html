@@ -1,0 +1,324 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-plus-circle me-2 text-primary"></i>
+        Nova Reserva
+    </h1>
+    <a href="/user/reservations" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>
+        Voltar
+    </a>
+</div>
+
+{% if error %}
+<div class="alert alert-danger d-flex align-items-center" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ error }}
+</div>
+{% endif %}
+
+{% if success %}
+<div class="alert alert-success d-flex align-items-center" role="alert">
+    <i class="fas fa-check-circle me-2"></i>
+    {{ success }}
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <!-- Formulário de Reserva -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Dados da Reserva
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/user/new-reservation">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="room_id" class="form-label">
+                                <i class="fas fa-door-open me-1"></i>
+                                Sala *
+                            </label>
+                            <select class="form-select" id="room_id" name="room_id" required onchange="updateRoomInfo()">
+                                <option value="">Selecione uma sala</option>
+                                {% for room in rooms %}
+                                <option value="{{ room.id }}" 
+                                        data-capacity="{{ room.capacity }}"
+                                        data-location="{{ room.location }}"
+                                        data-resources="{{ room.resources|join(', ') if room.resources else 'Nenhum' }}"
+                                        {% if request.form.get('room_id') == room.id|string %}selected{% endif %}>
+                                    {{ room.name }} ({{ room.capacity }} pessoas)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="date" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>
+                                Data *
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date" 
+                                   name="date" 
+                                   value="{{ request.form.get('date', '') }}"
+                                   min="{{ today }}"
+                                   required
+                                   onchange="checkAvailability()">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="start_time" class="form-label">
+                                <i class="fas fa-clock me-1"></i>
+                                Horário Início *
+                            </label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="start_time" 
+                                   name="start_time" 
+                                   value="{{ request.form.get('start_time', '') }}"
+                                   required
+                                   onchange="checkAvailability()">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="end_time" class="form-label">
+                                <i class="fas fa-clock me-1"></i>
+                                Horário Fim *
+                            </label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="end_time" 
+                                   name="end_time" 
+                                   value="{{ request.form.get('end_time', '') }}"
+                                   required
+                                   onchange="checkAvailability()">
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="purpose" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>
+                                Finalidade da Reunião *
+                            </label>
+                            <textarea class="form-control" 
+                                      id="purpose" 
+                                      name="purpose" 
+                                      rows="3" 
+                                      placeholder="Descreva o motivo da reserva..."
+                                      required>{{ request.form.get('purpose', '') }}</textarea>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="attendees_count" class="form-label">
+                                <i class="fas fa-users me-1"></i>
+                                Número de Participantes
+                            </label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="attendees_count" 
+                                   name="attendees_count" 
+                                   value="{{ request.form.get('attendees_count', '1') }}"
+                                   min="1"
+                                   placeholder="Quantas pessoas participarão?">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="recurring" class="form-label">
+                                <i class="fas fa-repeat me-1"></i>
+                                Recorrência
+                            </label>
+                            <select class="form-select" id="recurring" name="recurring">
+                                <option value="none">Não repetir</option>
+                                <option value="daily">Diariamente</option>
+                                <option value="weekly">Semanalmente</option>
+                                <option value="monthly">Mensalmente</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Status de Disponibilidade -->
+                    <div id="availability-status" class="mt-3" style="display: none;">
+                        <div class="alert" id="availability-alert"></div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                            <i class="fas fa-save me-2"></i>
+                            Criar Reserva
+                        </button>
+                        <a href="/user/reservations" class="btn btn-outline-secondary btn-lg ms-2">
+                            <i class="fas fa-times me-2"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informações da Sala -->
+    <div class="col-lg-4">
+        <div class="card" id="room-info" style="display: none;">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informações da Sala
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nome:</label>
+                    <div id="room-name"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Localização:</label>
+                    <div id="room-location"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Capacidade:</label>
+                    <div id="room-capacity"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Recursos:</label>
+                    <div id="room-resources"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dicas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2 text-warning"></i>
+                    Dicas
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Reservas podem ser feitas com até 30 dias de antecedência
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Chegue 5 minutos antes do horário agendado
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Cancele com antecedência se não for usar
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Deixe a sala limpa e organizada
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateRoomInfo() {
+    const select = document.getElementById('room_id');
+    const selectedOption = select.options[select.selectedIndex];
+    const roomInfo = document.getElementById('room-info');
+    
+    if (selectedOption.value) {
+        document.getElementById('room-name').textContent = selectedOption.textContent;
+        document.getElementById('room-location').textContent = selectedOption.dataset.location;
+        document.getElementById('room-capacity').textContent = selectedOption.dataset.capacity + ' pessoas';
+        document.getElementById('room-resources').textContent = selectedOption.dataset.resources;
+        roomInfo.style.display = 'block';
+        
+        checkAvailability();
+    } else {
+        roomInfo.style.display = 'none';
+    }
+}
+
+function checkAvailability() {
+    const roomId = document.getElementById('room_id').value;
+    const date = document.getElementById('date').value;
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    
+    if (!roomId || !date || !startTime || !endTime) {
+        hideAvailabilityStatus();
+        return;
+    }
+    
+    fetch('/api/check-availability', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            room_id: roomId,
+            date: date,
+            start_time: startTime,
+            end_time: endTime
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showAvailabilityStatus(data.available, data.message);
+    })
+    .catch(error => {
+        console.error('Error checking availability:', error);
+    });
+}
+
+function showAvailabilityStatus(available, message) {
+    const statusDiv = document.getElementById('availability-status');
+    const alertDiv = document.getElementById('availability-alert');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (available) {
+        alertDiv.className = 'alert alert-success';
+        alertDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + message;
+        submitBtn.disabled = false;
+    } else {
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>' + message;
+        submitBtn.disabled = true;
+    }
+    
+    statusDiv.style.display = 'block';
+}
+
+function hideAvailabilityStatus() {
+    const statusDiv = document.getElementById('availability-status');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    statusDiv.style.display = 'none';
+    submitBtn.disabled = false;
+}
+
+// Validar horários
+document.getElementById('start_time').addEventListener('change', function() {
+    const startTime = this.value;
+    const endTimeInput = document.getElementById('end_time');
+    
+    if (startTime) {
+        // Definir horário mínimo para fim como 1 hora após o início
+        const [hours, minutes] = startTime.split(':');
+        const endHours = parseInt(hours) + 1;
+        const minEndTime = `${endHours.toString().padStart(2, '0')}:${minutes}`;
+        endTimeInput.min = minEndTime;
+        
+        if (endTimeInput.value && endTimeInput.value <= startTime) {
+            endTimeInput.value = minEndTime;
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+services:
+  salastech-api:
+    build: .
+    container_name: salastech-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_TYPE=sqlite
+      - SECRET_KEY=salastech-docker-secret-key-change-in-production
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+    volumes:
+      - ./db.sqlite:/app/db.sqlite
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  salastech_data:

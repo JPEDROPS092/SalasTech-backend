@@ -1,0 +1,452 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/user/reservations" class="text-decoration-none">
+                    <i class="fas fa-calendar-check me-1"></i>
+                    Reservas
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Detalhes da Reserva</li>
+        </ol>
+    </nav>
+    <div>
+        {% if reservation.status != 'cancelled' and reservation.start_time > now %}
+        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editModal">
+            <i class="fas fa-edit me-2"></i>
+            Editar
+        </button>
+        <button type="button" class="btn btn-outline-danger ms-2" onclick="cancelReservation()">
+            <i class="fas fa-times me-2"></i>
+            Cancelar
+        </button>
+        {% endif %}
+        <a href="/user/reservations" class="btn btn-outline-secondary ms-2">
+            <i class="fas fa-arrow-left me-2"></i>
+            Voltar
+        </a>
+    </div>
+</div>
+
+{% if success %}
+<div class="alert alert-success d-flex align-items-center" role="alert">
+    <i class="fas fa-check-circle me-2"></i>
+    {{ success }}
+</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger d-flex align-items-center" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ error }}
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <!-- Detalhes da Reserva -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-check me-2 text-primary"></i>
+                        Detalhes da Reserva
+                    </h5>
+                    <span class="badge fs-6 
+                        {% if reservation.status == 'confirmed' %}bg-success
+                        {% elif reservation.status == 'pending' %}bg-warning
+                        {% else %}bg-danger{% endif %}">
+                        {% if reservation.status == 'confirmed' %}Confirmada
+                        {% elif reservation.status == 'pending' %}Pendente
+                        {% else %}Cancelada{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-door-open me-2 text-info"></i>
+                            Sala
+                        </h6>
+                        <p class="text-muted mb-1">{{ reservation.room.name }}</p>
+                        <small class="text-muted">{{ reservation.room.location }}</small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-calendar me-2 text-info"></i>
+                            Data
+                        </h6>
+                        <p class="text-muted">{{ reservation.start_time.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-clock me-2 text-info"></i>
+                            Horário
+                        </h6>
+                        <p class="text-muted">
+                            {{ reservation.start_time.strftime('%H:%M') }} - 
+                            {{ reservation.end_time.strftime('%H:%M') }}
+                        </p>
+                        <small class="text-muted">
+                            Duração: {{ duration_hours }}h{{ duration_minutes }}m
+                        </small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-users me-2 text-info"></i>
+                            Participantes
+                        </h6>
+                        <p class="text-muted">{{ reservation.attendees_count or 'Não informado' }}</p>
+                    </div>
+                    
+                    <div class="col-12">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-file-alt me-2 text-info"></i>
+                            Finalidade
+                        </h6>
+                        <p class="text-muted">{{ reservation.purpose or 'Não informado' }}</p>
+                    </div>
+                    
+                    {% if reservation.recurring_type and reservation.recurring_type != 'none' %}
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-repeat me-2 text-info"></i>
+                            Recorrência
+                        </h6>
+                        <p class="text-muted">
+                            {% if reservation.recurring_type == 'daily' %}Diariamente
+                            {% elif reservation.recurring_type == 'weekly' %}Semanalmente
+                            {% elif reservation.recurring_type == 'monthly' %}Mensalmente
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-calendar-plus me-2 text-info"></i>
+                            Criada em
+                        </h6>
+                        <p class="text-muted">{{ reservation.created_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+                    </div>
+                    
+                    {% if reservation.updated_at and reservation.updated_at != reservation.created_at %}
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-edit me-2 text-info"></i>
+                            Última atualização
+                        </h6>
+                        <p class="text-muted">{{ reservation.updated_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Histórico de Alterações -->
+        {% if reservation_history %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2 text-warning"></i>
+                    Histórico de Alterações
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for change in reservation_history %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker 
+                            {% if change.action == 'created' %}bg-success
+                            {% elif change.action == 'updated' %}bg-warning
+                            {% else %}bg-danger{% endif %}">
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ change.description }}</h6>
+                                    <small class="text-muted">{{ change.created_at.strftime('%d/%m/%Y às %H:%M') }}</small>
+                                </div>
+                                <span class="badge bg-light text-dark">{{ change.action.title() }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Informações da Sala -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-door-open me-2 text-primary"></i>
+                    Informações da Sala
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-2">{{ reservation.room.name }}</h6>
+                <p class="text-muted mb-2">{{ reservation.room.location }}</p>
+                
+                <div class="row text-center mb-3">
+                    <div class="col">
+                        <div class="h6 mb-0">{{ reservation.room.capacity }}</div>
+                        <small class="text-muted">Capacidade</small>
+                    </div>
+                </div>
+                
+                {% if reservation.room.resources %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Recursos:</small>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for resource in reservation.room.resources %}
+                        <span class="badge bg-light text-dark">{{ resource }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="d-grid">
+                    <a href="/user/rooms/{{ reservation.room.id }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-2"></i>
+                        Ver Detalhes da Sala
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ações Rápidas -->
+        {% if reservation.status != 'cancelled' %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2 text-warning"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if reservation.start_time > now %}
+                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal">
+                        <i class="fas fa-edit me-2"></i>
+                        Editar Reserva
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="cancelReservation()">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar Reserva
+                    </button>
+                    {% endif %}
+                    <a href="/user/new-reservation?room_id={{ reservation.room.id }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Nova Reserva Nesta Sala
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Informações Adicionais -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2 text-info"></i>
+                    Lembrete
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        <small>Chegue 5 minutos antes</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-mobile text-success me-2"></i>
+                        <small>Traga seus equipamentos necessários</small>
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-broom text-warning me-2"></i>
+                        <small>Deixe a sala organizada</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Reserva -->
+{% if reservation.status != 'cancelled' and reservation.start_time > now %}
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>
+                    Editar Reserva
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="/user/reservations/{{ reservation.id }}/edit">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="date" class="form-label">Data *</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date" 
+                                   name="date" 
+                                   value="{{ reservation.start_time.strftime('%Y-%m-%d') }}"
+                                   min="{{ today }}"
+                                   required>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="start_time" class="form-label">Início *</label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="start_time" 
+                                   name="start_time" 
+                                   value="{{ reservation.start_time.strftime('%H:%M') }}"
+                                   required>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="end_time" class="form-label">Fim *</label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="end_time" 
+                                   name="end_time" 
+                                   value="{{ reservation.end_time.strftime('%H:%M') }}"
+                                   required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="purpose" class="form-label">Finalidade *</label>
+                            <textarea class="form-control" 
+                                      id="purpose" 
+                                      name="purpose" 
+                                      rows="3" 
+                                      required>{{ reservation.purpose }}</textarea>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="attendees_count" class="form-label">Participantes</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="attendees_count" 
+                                   name="attendees_count" 
+                                   value="{{ reservation.attendees_count or '' }}"
+                                   min="1">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-2"></i>
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid var(--bs-primary);
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function cancelReservation() {
+    if (confirm('Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.')) {
+        fetch(`/api/reservations/{{ reservation.id }}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/user/reservations';
+            } else {
+                alert('Erro ao cancelar reserva: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Erro ao cancelar reserva');
+            console.error('Error:', error);
+        });
+    }
+}
+
+// Validação de horários no modal de edição
+document.getElementById('start_time').addEventListener('change', function() {
+    const startTime = this.value;
+    const endTimeInput = document.getElementById('end_time');
+    
+    if (startTime) {
+        const [hours, minutes] = startTime.split(':');
+        const endHours = parseInt(hours) + 1;
+        const minEndTime = `${endHours.toString().padStart(2, '0')}:${minutes}`;
+        endTimeInput.min = minEndTime;
+        
+        if (endTimeInput.value && endTimeInput.value <= startTime) {
+            endTimeInput.value = minEndTime;
+        }
+    }
+});
+</script>
+{% endblock %}

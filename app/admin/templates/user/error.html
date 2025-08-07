@@ -1,0 +1,48 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+    <div class="row w-100">
+        <div class="col-md-6 offset-md-3 col-lg-4 offset-lg-4">
+            <div class="card shadow-lg text-center">
+                <div class="card-body p-5">
+                    {% if error_code == 404 %}
+                    <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                    <h2 class="h4 mb-3">Página Não Encontrada</h2>
+                    <p class="text-muted mb-4">A página que você está procurando não foi encontrada.</p>
+                    {% elif error_code == 403 %}
+                    <i class="fas fa-ban fa-4x text-danger mb-4"></i>
+                    <h2 class="h4 mb-3">Acesso Negado</h2>
+                    <p class="text-muted mb-4">Você não tem permissão para acessar esta página.</p>
+                    {% elif error_code == 500 %}
+                    <i class="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+                    <h2 class="h4 mb-3">Erro Interno</h2>
+                    <p class="text-muted mb-4">Ocorreu um erro inesperado. Tente novamente em alguns minutos.</p>
+                    {% else %}
+                    <i class="fas fa-bug fa-4x text-danger mb-4"></i>
+                    <h2 class="h4 mb-3">Erro {{ error_code or 'Desconhecido' }}</h2>
+                    <p class="text-muted mb-4">{{ error_message or 'Ocorreu um erro inesperado.' }}</p>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2">
+                        <a href="/user/dashboard" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>
+                            Voltar ao Dashboard
+                        </a>
+                        <a href="/user/reservations" class="btn btn-outline-secondary">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            Minhas Reservas
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.container-fluid {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+</style>
+{% endblock %}

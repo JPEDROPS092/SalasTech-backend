@@ -22,13 +22,13 @@ dependencies = [
     "httpx==0.28.1", # Comum para testes de API ou requisições externas
     "Jinja2==3.1.6", # Incluir se estiver usando templating
     "passlib==1.7.4",
-    "psycopg2-binary==2.9.10",
     "PyJWT==2.10.1",
-    "PyMySQL==1.1.1", # Incluir se estiver usando MySQL, caso contrário, considerar remover
     "python-multipart==0.0.20",
     "SQLAlchemy==2.0.41",
     "uvicorn==0.34.2",
-    # Nota: Muitas entradas da sua lista original eram dependências transitivas
+    "itsdangerous>=2.0.0",
+    "starlette>=0.27.0",
+    # Nota: Usando apenas SQLite, removidas dependências de PostgreSQL e MySQL
     # (dependências de outros pacotes que você listou) e são instaladas automaticamente
     # pelo pip/seu gerenciador de pacotes. Listar apenas as dependências diretas mantém esta
     # lista limpa e gerenciável.
@@ -43,7 +43,8 @@ test = [
 ]
 
 [project.scripts]
-SalasTech = "SalasTech.cli.main:app"
+salastech = "app.main:app"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["app*"]

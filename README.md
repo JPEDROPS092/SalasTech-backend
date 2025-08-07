@@ -40,6 +40,30 @@ A documentação completa está disponível no diretório `docs/`:
 
 ## Instalação Rápida
 
+### Opção 1: Usando Docker (Recomendado)
+
+1. Clone o repositório:
+
+   ```bash
+   git clone https://github.com/jpedrops092/SalasTech-backend.git
+   cd SalasTech-backend
+   ```
+
+2. Execute com Docker Compose:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+3. Acesse a aplicação:
+
+   - API: http://localhost:8000
+   - Documentação da API: http://localhost:8000/docs
+   - Painel Admin: http://localhost:8000/admin
+   - Health Check: http://localhost:8000/health
+
+### Opção 2: Instalação Manual
+
 1. Clone o repositório:
 
    ```bash
@@ -94,8 +118,8 @@ A documentação completa está disponível no diretório `docs/`:
 
 8. Acesse a aplicação:
 
-   - API: http://localhost:8000/api
-   - Documentação da API: http://localhost:8000/api/docs
+   - API: http://localhost:8000
+   - Documentação da API: http://localhost:8000/docs
    - Painel Admin: http://localhost:8000/admin
 
 ## Administração de Usuários
@@ -124,6 +148,72 @@ python scripts/backup_database.py
 ```
 
 Os backups são armazenados no diretório `backups/` com timestamp.
+
+## Docker
+
+### Comandos Docker Úteis
+
+```bash
+# Construir e executar com Docker Compose
+docker-compose up -d
+
+# Parar os containers
+docker-compose down
+
+# Ver logs da aplicação
+docker-compose logs -f salastech-api
+
+# Reconstruir a imagem (após mudanças no código)
+docker-compose up -d --build
+
+# Executar comandos dentro do container
+docker-compose exec salastech-api python manage_admins.py
+
+# Acessar o shell do container
+docker-compose exec salastech-api bash
+```
+
+### Usando apenas Docker (sem Compose)
+
+```bash
+# Construir a imagem
+docker build -t salastech-backend .
+
+# Executar o container
+docker run -d \
+  --name salastech-api \
+  -p 8000:8000 \
+  -v $(pwd)/db.sqlite:/app/db.sqlite \
+  -v $(pwd)/logs:/app/logs \
+  -v $(pwd)/backups:/app/backups \
+  salastech-backend
+
+# Ver logs
+docker logs -f salastech-api
+
+# Parar e remover o container
+docker stop salastech-api && docker rm salastech-api
+```
+
+### Configuração com Banco de Dados Externo
+
+Para usar PostgreSQL ou MySQL, descomente as seções apropriadas no `docker-compose.yml` e configure as variáveis de ambiente.
+
+**PostgreSQL:**
+
+```yaml
+environment:
+  - DB_TYPE=postgresql
+  - DATABASE_URL=postgresql://salastech:salastech123@postgres:5432/salastech
+```
+
+**MySQL:**
+
+```yaml
+environment:
+  - DB_TYPE=mysql
+  - DATABASE_URL=mysql://salastech:salastech123@mysql:3306/salastech
+```
 
 ## Estrutura do Projeto
 

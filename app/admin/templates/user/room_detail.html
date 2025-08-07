@@ -1,0 +1,305 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/user/rooms" class="text-decoration-none">
+                    <i class="fas fa-door-open me-1"></i>
+                    Salas
+                </a>
+            </li>
+            <li class="breadcrumb-item active">{{ room.name }}</li>
+        </ol>
+    </nav>
+    <div>
+        {% if room.is_active %}
+        <a href="/user/new-reservation?room_id={{ room.id }}" class="btn btn-primary">
+            <i class="fas fa-calendar-plus me-2"></i>
+            Reservar Sala
+        </a>
+        {% endif %}
+        <a href="/user/rooms" class="btn btn-outline-secondary ms-2">
+            <i class="fas fa-arrow-left me-2"></i>
+            Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Informações da Sala -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-door-open me-2 text-primary"></i>
+                        {{ room.name }}
+                    </h4>
+                    {% if room.is_active %}
+                        <span class="badge bg-success fs-6">Ativa</span>
+                    {% else %}
+                        <span class="badge bg-danger fs-6">Inativa</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-map-marker-alt me-2 text-info"></i>
+                            Localização
+                        </h6>
+                        <p class="text-muted">{{ room.location }}</p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-users me-2 text-info"></i>
+                            Capacidade
+                        </h6>
+                        <p class="text-muted">{{ room.capacity }} pessoas</p>
+                    </div>
+                    
+                    {% if room.description %}
+                    <div class="col-12">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-file-alt me-2 text-info"></i>
+                            Descrição
+                        </h6>
+                        <p class="text-muted">{{ room.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if room.resources %}
+                    <div class="col-12">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-cogs me-2 text-info"></i>
+                            Recursos Disponíveis
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for resource in room.resources %}
+                            <span class="badge bg-light text-dark border">
+                                <i class="fas fa-check me-1 text-success"></i>
+                                {{ resource }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Agenda de Hoje -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-day me-2 text-primary"></i>
+                    Agenda de Hoje - {{ today.strftime('%d/%m/%Y') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if today_reservations %}
+                <div class="timeline">
+                    {% for reservation in today_reservations %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker 
+                            {% if reservation.status == 'confirmed' %}bg-success
+                            {% elif reservation.status == 'pending' %}bg-warning
+                            {% else %}bg-danger{% endif %}">
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {{ reservation.start_time.strftime('%H:%M') }} - 
+                                        {{ reservation.end_time.strftime('%H:%M') }}
+                                    </h6>
+                                    <p class="mb-1">{{ reservation.purpose or 'Não informado' }}</p>
+                                    <small class="text-muted">
+                                        Reservado por: {{ reservation.user.name }}
+                                    </small>
+                                </div>
+                                <span class="badge 
+                                    {% if reservation.status == 'confirmed' %}bg-success
+                                    {% elif reservation.status == 'pending' %}bg-warning
+                                    {% else %}bg-danger{% endif %}">
+                                    {% if reservation.status == 'confirmed' %}Confirmada
+                                    {% elif reservation.status == 'pending' %}Pendente
+                                    {% else %}Cancelada{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Nenhuma reserva para hoje</h6>
+                    <p class="text-muted mb-3">Esta sala está disponível durante todo o dia.</p>
+                    {% if room.is_active %}
+                    <a href="/user/new-reservation?room_id={{ room.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Fazer Reserva
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Status Atual -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2 text-info"></i>
+                    Status Atual
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if current_status %}
+                    {% if current_status.is_occupied %}
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-clock me-2"></i>
+                        <strong>Ocupada até {{ current_status.next_available }}</strong>
+                        <br>
+                        <small>{{ current_status.current_reservation.purpose or 'Reunião em andamento' }}</small>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success mb-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Disponível agora</strong>
+                        {% if current_status.next_reservation %}
+                        <br>
+                        <small>Próxima reserva às {{ current_status.next_reservation }}</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endif %}
+                
+                <!-- Ação Rápida -->
+                {% if room.is_active %}
+                <div class="d-grid">
+                    <a href="/user/new-reservation?room_id={{ room.id }}" class="btn btn-primary">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Reservar Agora
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Estatísticas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2 text-success"></i>
+                    Estatísticas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h4 mb-0 text-primary">{{ stats.total_reservations }}</div>
+                        <small class="text-muted">Total de Reservas</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 mb-0 text-success">{{ stats.this_month }}</div>
+                        <small class="text-muted">Este Mês</small>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h4 mb-0 text-warning">{{ stats.this_week }}</div>
+                        <small class="text-muted">Esta Semana</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 mb-0 text-info">{{ stats.utilization_rate }}%</div>
+                        <small class="text-muted">Taxa de Uso</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Horários de Funcionamento -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2 text-warning"></i>
+                    Informações Importantes
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        <small>Funcionamento: 07:00 às 22:00</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-calendar text-success me-2"></i>
+                        <small>Segunda a Sexta-feira</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-ban text-danger me-2"></i>
+                        <small>Cancelamento até 2h antes</small>
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-users text-info me-2"></i>
+                        <small>Reserva mínima: 30 minutos</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid var(--bs-primary);
+}
+</style>
+{% endblock %}

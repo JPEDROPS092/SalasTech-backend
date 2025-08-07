@@ -16,10 +16,10 @@ ENV/
 .vscode/
 
 # SQLite database
-*.sqlite
-*.sqlite3
+#*.sqlite
+#*.sqlite3
 
-db.sqlite
+#db.sqlite
 
 # Backup files
 backups/

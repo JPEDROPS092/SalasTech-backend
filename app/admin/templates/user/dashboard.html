@@ -1,0 +1,268 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+        Dashboard
+    </h1>
+    <div class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        <span id="current-time"></span>
+    </div>
+</div>
+
+<!-- Estatísticas do Usuário -->
+<div class="row g-4 mb-5">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-check fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ total_reservations }}</div>
+                        <div class="small">Total de Reservas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ active_reservations }}</div>
+                        <div class="small">Reservas Ativas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ upcoming_reservations }}</div>
+                        <div class="small">Próximas Reservas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-door-open fa-2x opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="h4 mb-0">{{ available_rooms }}</div>
+                        <div class="small">Salas Disponíveis</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Próximas Reservas -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-check me-2 text-primary"></i>
+                    Próximas Reservas
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_reservations_list %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sala</th>
+                                <th>Data</th>
+                                <th>Horário</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in upcoming_reservations_list %}
+                            <tr>
+                                <td>
+                                    <strong>{{ reservation.room.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ reservation.room.location }}</small>
+                                </td>
+                                <td>{{ reservation.start_time.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    {{ reservation.start_time.strftime('%H:%M') }} - 
+                                    {{ reservation.end_time.strftime('%H:%M') }}
+                                </td>
+                                <td>
+                                    {% if reservation.status == 'confirmed' %}
+                                        <span class="badge bg-success">Confirmada</span>
+                                    {% elif reservation.status == 'pending' %}
+                                        <span class="badge bg-warning">Pendente</span>
+                                    {% elif reservation.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelada</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/user/reservations/{{ reservation.id }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if reservation.status != 'cancelled' %}
+                                        <button class="btn btn-outline-danger btn-sm" 
+                                                onclick="cancelReservation({{ reservation.id }})">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhuma reserva agendada</h5>
+                    <p class="text-muted">Clique no botão abaixo para fazer uma nova reserva</p>
+                    <a href="/user/new-reservation" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Nova Reserva
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Ações Rápidas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2 text-warning"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/user/new-reservation" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Nova Reserva
+                    </a>
+                    <a href="/user/rooms" class="btn btn-outline-primary">
+                        <i class="fas fa-door-open me-2"></i>
+                        Ver Salas
+                    </a>
+                    <a href="/user/reservations" class="btn btn-outline-secondary">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Histórico
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informações do Usuário -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2 text-info"></i>
+                    Meu Perfil
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 50px; height: 50px;">
+                        <i class="fas fa-user fa-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">{{ user.name }}</h6>
+                        <small class="text-muted">{{ user.email }}</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="h6 mb-0">{{ user.department.name if user.department else 'N/A' }}</div>
+                        <small class="text-muted">Departamento</small>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="/user/profile" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-edit me-2"></i>
+                        Editar Perfil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    document.getElementById('current-time').textContent = timeString;
+}
+
+function cancelReservation(reservationId) {
+    if (confirm('Tem certeza que deseja cancelar esta reserva?')) {
+        fetch(`/api/reservations/${reservationId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao cancelar reserva: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Erro ao cancelar reserva');
+            console.error('Error:', error);
+        });
+    }
+}
+
+// Atualizar horário a cada minuto
+updateTime();
+setInterval(updateTime, 60000);
+</script>
+{% endblock %}

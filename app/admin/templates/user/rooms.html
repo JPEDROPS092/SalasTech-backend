@@ -1,0 +1,248 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-door-open me-2 text-primary"></i>
+        Salas Disponíveis
+    </h1>
+    <a href="/user/new-reservation" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>
+        Nova Reserva
+    </a>
+</div>
+
+<!-- Filtros de Busca -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Buscar Sala</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="search" 
+                       name="search" 
+                       placeholder="Nome ou localização..."
+                       value="{{ request.args.get('search', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="min_capacity" class="form-label">Capacidade Mínima</label>
+                <input type="number" 
+                       class="form-control" 
+                       id="min_capacity" 
+                       name="min_capacity" 
+                       min="1"
+                       placeholder="Ex: 10"
+                       value="{{ request.args.get('min_capacity', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date" class="form-label">Data</label>
+                <input type="date" 
+                       class="form-control" 
+                       id="date" 
+                       name="date" 
+                       min="{{ today }}"
+                       value="{{ request.args.get('date', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="start_time" class="form-label">Horário</label>
+                <input type="time" 
+                       class="form-control" 
+                       id="start_time" 
+                       name="start_time" 
+                       value="{{ request.args.get('start_time', '') }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search me-1"></i>
+                    Filtrar
+                </button>
+                <a href="/user/rooms" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>
+                    Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Salas -->
+{% if rooms %}
+<div class="row g-4">
+    {% for room in rooms %}
+    <div class="col-lg-6 col-xl-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">{{ room.name }}</h5>
+                {% if room.is_active %}
+                    <span class="badge bg-success">Ativa</span>
+                {% else %}
+                    <span class="badge bg-danger">Inativa</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        {{ room.location }}
+                    </small>
+                </div>
+                
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-users text-primary me-2"></i>
+                            <small>{{ room.capacity }} pessoas</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-check text-success me-2"></i>
+                            <small>{{ room.reservations_count or 0 }} reservas</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if room.description %}
+                <p class="card-text small text-muted mb-3">{{ room.description }}</p>
+                {% endif %}
+                
+                <!-- Recursos -->
+                {% if room.resources %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Recursos:</small>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for resource in room.resources %}
+                        <span class="badge bg-light text-dark">{{ resource }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Status de Disponibilidade para Hoje -->
+                {% if today_availability and room.id in today_availability %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Disponibilidade hoje:</small>
+                    {% if today_availability[room.id]['available'] %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check me-1"></i>
+                            Disponível
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning">
+                            <i class="fas fa-clock me-1"></i>
+                            Ocupada até {{ today_availability[room.id]['next_available'] }}
+                        </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="btn-group w-100">
+                    <a href="/user/rooms/{{ room.id }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>
+                        Detalhes
+                    </a>
+                    {% if room.is_active %}
+                    <a href="/user/new-reservation?room_id={{ room.id }}" 
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-calendar-plus me-1"></i>
+                        Reservar
+                    </a>
+                    {% else %}
+                    <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-ban me-1"></i>
+                        Indisponível
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Paginação -->
+{% if pagination %}
+<nav aria-label="Navegação de páginas" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('user_rooms', page=pagination.prev_num, **request.args) }}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != pagination.page %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('user_rooms', page=page_num, **request.args) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% endif %}
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">…</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('user_rooms', page=pagination.next_num, **request.args) }}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-door-closed fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">Nenhuma sala encontrada</h5>
+        <p class="text-muted">
+            {% if request.args %}
+            Nenhuma sala corresponde aos critérios de busca. Tente ajustar os filtros.
+            {% else %}
+            Não há salas disponíveis no momento.
+            {% endif %}
+        </p>
+        {% if request.args %}
+        <a href="/user/rooms" class="btn btn-primary">
+            <i class="fas fa-times me-2"></i>
+            Limpar Filtros
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Auto-submit do formulário quando mudar a data ou horário para filtrar disponibilidade
+document.getElementById('date').addEventListener('change', function() {
+    if (this.value && document.getElementById('start_time').value) {
+        document.querySelector('form').submit();
+    }
+});
+
+document.getElementById('start_time').addEventListener('change', function() {
+    if (this.value && document.getElementById('date').value) {
+        document.querySelector('form').submit();
+    }
+});
+</script>
+{% endblock %}
