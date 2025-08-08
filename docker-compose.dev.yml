@@ -1,0 +1,77 @@
+# =============================================================================
+# DOCKER COMPOSE PARA DESENVOLVIMENTO - SALASTECH
+# =============================================================================
+
+version: '3.8'
+
+services:
+  salastech-api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: salastech-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - SECRET_KEY=salastech-dev-secret-key-not-for-production
+      - DB_TYPE=sqlite
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - LOG_LEVEL=debug
+    volumes:
+      # Mount do código para hot reload
+      - ./app:/app/app:ro
+      - ./migrations:/app/migrations:ro
+      - ./scripts:/app/scripts:ro
+      # Mount de dados persistentes
+      - salastech_dev_db:/app/db.sqlite
+      - salastech_dev_logs:/app/logs
+      - salastech_dev_backups:/app/backups
+      # Mount do código fonte para desenvolvimento
+      - .:/workspace:rw
+    working_dir: /app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 2
+      start_period: 30s
+    networks:
+      - salastech-dev-network
+
+  # Serviço adicional para testes (opcional)
+  salastech-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: salastech-test
+    environment:
+      - ENVIRONMENT=test
+      - DEBUG=False
+      - SECRET_KEY=salastech-test-secret-key
+      - DB_TYPE=sqlite
+    volumes:
+      - ./:/workspace:rw
+    working_dir: /workspace
+    command: ["python", "-m", "pytest", "tests/", "-v", "--tb=short"]
+    depends_on:
+      - salastech-api-dev
+    networks:
+      - salastech-dev-network
+    profiles:
+      - testing
+
+volumes:
+  salastech_dev_db:
+    driver: local
+  salastech_dev_logs:
+    driver: local
+  salastech_dev_backups:
+    driver: local
+
+networks:
+  salastech-dev-network:
+    driver: bridge
+    name: salastech-dev

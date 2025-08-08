@@ -1,0 +1,114 @@
+# =============================================================================
+# DOCKER COMPOSE PARA PRODUÇÃO - SALASTECH
+# =============================================================================
+
+version: '3.8'
+
+services:
+  salastech-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: salastech-backend-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_TYPE=sqlite
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - LOG_LEVEL=info
+    volumes:
+      # Apenas dados persistentes em produção
+      - salastech_prod_db:/app/db.sqlite
+      - salastech_prod_logs:/app/logs
+      - salastech_prod_backups:/app/backups
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - salastech-prod-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Nginx reverse proxy (opcional, mas recomendado para produção)
+  nginx:
+    image: nginx:alpine
+    container_name: salastech-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - salastech-api
+    restart: always
+    networks:
+      - salastech-prod-network
+    profiles:
+      - with-nginx
+
+  # Serviço de backup automático
+  backup-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: salastech-backup
+    environment:
+      - ENVIRONMENT=production
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - salastech_prod_db:/app/db.sqlite:ro
+      - salastech_prod_backups:/app/backups
+      - backup_storage:/backups
+    command: ["python", "scripts/backup_database.py", "--scheduled"]
+    depends_on:
+      - salastech-api
+    restart: unless-stopped
+    networks:
+      - salastech-prod-network
+    profiles:
+      - with-backup
+
+volumes:
+  salastech_prod_db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_PATH:-./data}/db
+  salastech_prod_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_PATH:-./data}/logs
+  salastech_prod_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_PATH:-./data}/backups
+  backup_storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${BACKUP_PATH:-./backups}
+
+networks:
+  salastech-prod-network:
+    driver: bridge
+    name: salastech-prod
