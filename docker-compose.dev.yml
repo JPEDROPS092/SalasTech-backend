@@ -2,7 +2,7 @@
 # DOCKER COMPOSE PARA DESENVOLVIMENTO - SALASTECH
 # =============================================================================
 
-version: '3.8'
+version: "3.8"
 
 services:
   salastech-api-dev:
