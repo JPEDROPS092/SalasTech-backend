@@ -10,11 +10,13 @@ FROM python:3.11-slim as builder
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=8000
 
 # Instalar dependências de sistema para build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Criar diretório de trabalho
@@ -37,12 +39,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     PATH="/home/salastech/.local/bin:$PATH" \
-    ENVIRONMENT=production
+    ENVIRONMENT=production \
+    PORT=8000 \
+    HOST=0.0.0.0 \
+    WORKERS=4
 
 # Instalar apenas dependências mínimas para runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     dumb-init \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -75,7 +81,7 @@ EXPOSE 8000
 
 # Health check otimizado
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Usar dumb-init para gerenciamento de processos
 ENTRYPOINT ["dumb-init", "--"]

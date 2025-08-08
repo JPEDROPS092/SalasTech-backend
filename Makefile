@@ -24,12 +24,24 @@ build-dev: ## Fazer build da imagem de desenvolvimento
 
 # Comandos de produção
 prod: ## Iniciar ambiente de produção
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "❌ ERROR: DATABASE_URL não definida"; \
+		exit 1; \
+	fi
 	$(COMPOSE_PROD) up --build
 
 prod-daemon: ## Iniciar ambiente de produção em background
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "❌ ERROR: DATABASE_URL não definida"; \
+		exit 1; \
+	fi
 	$(COMPOSE_PROD) up --build -d
 
 build-prod: ## Fazer build da imagem de produção
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "❌ ERROR: DATABASE_URL não definida"; \
+		exit 1; \
+	fi
 	$(COMPOSE_PROD) build
 
 # Comandos de nginx (produção)
